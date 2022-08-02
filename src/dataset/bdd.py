@@ -22,11 +22,7 @@ class BDD(data.Dataset):
     def __init__(self,
                  cfg,
                  stage,
-                 task='detection',
-                 detection_cls=['pedestrian', 'rider', 'motorcycle', 'car', 'bus', 'motorcycle', 'bicycle',
-                                'traffic light'],
-                 segmentation_cls=None,
-                 panoptic_cls=None,
+                 obj_cls,
                  db_path=None,
                  relative_path='..',
                  image_size=(400, 400),
@@ -36,18 +32,16 @@ class BDD(data.Dataset):
         Constructor for BDD class
         :param cfg: yacs configuration that contains all the necessary information about the dataset and labels
         :param stage: to select the stage (train, test)
-        :param detection_cls: list contains the objects we want to detect
-        :param task: string contains the task we want to perform
+        :param obj_cls: list contains the objects we want to detect
         :param db_path: db path for pre created db
         :param relative_path: relative dataset path
-        :param image_size: tuble that contains the image size (w, h)
-        :param transform: torchvision.transforms as input
+        :param image_size: tuple that contains the image size (w, h)
+        :param transform: torchvision. Transforms as input
         """
         assert stage in ['train', 'test'], "stage must be : 'train' or 'test'"
-        assert task in cfg.DATASET.TASKS, f"You have to choose form the following tasks: {cfg.DATASET.TASKS}."
 
         assert all(cls in cfg.DATASET.DETECTION_CLASSES for cls in
-                   detection_cls), f"Please choose classes from the following: {cfg.DATASET.DETECTION_CLASSES} "
+                   obj_cls), f"Please choose classes from the following: {cfg.DATASET.DETECTION_CLASSES} "
 
         self.root = Path(relative_path) / Path(cfg.DATASET.ROOT)
         self.images_root = self.root / Path(cfg.DATASET.IMAGE_ROOT)
@@ -59,79 +53,41 @@ class BDD(data.Dataset):
         self.lane_root = self.root / Path(cfg.DATASET.LANE_ROOT)
 
         self.stage = stage
-        self.task = task
-        self.detection_cls = detection_cls
-        self.imgs_size = image_size
+        self.obj_cls = obj_cls
+        self.image_size = image_size
         self.transform = transform
 
         self.images = list(self.images_root.glob('**/*.jpg'))
 
-        if detection_cls:
-            self.cls_to_idx, self.idx_to_cls = self.create_idx(self.detection_cls)
-        elif segmentation_cls:
-            pass
-        elif panoptic_cls:
-            pass
+        self.db = deque()
+        self.cls_to_idx, self.idx_to_cls = self.create_idx()
 
-        if db_path:
-            with open(db_path, 'r') as f:
-                self.db = json.load(f)
-        else:
-            self.db = self.__create_db()
-
-    def create_idx(self, cls_list):
+    def create_idx(self):
         cls_to_idx = {}
         idx_to_cls = {}
 
-        for idx in range(len(cls_list)):
-            cls_to_idx[cls_list[idx]] = idx
-            idx_to_cls[idx] = cls_list[idx]
+        for idx in range(len(self.obj_cls)):
+            cls_to_idx[self.obj_cls[idx]] = idx
+            idx_to_cls[idx] = self.obj_cls[idx]
 
         return cls_to_idx, idx_to_cls
 
-    def __create_detection_db(self):
-        detection_db = deque()
-        labels_path = self.labels_root / Path('det_train.json' if self.stage == 'train' else 'det_val.json')
-        with open(labels_path, 'r') as labels_file:
-            labels = json.load(labels_file)
+    @staticmethod
+    def xyxy_to_xywh(x1, y1, x2, y2):
+        x = x1
+        y = y1
+        w = x2 - x1
+        h = y2 - y2
+        return (x, y, w, h)
 
-        for item in tqdm(labels):
-            image_path = str(self.images_root / Path('train' if self.stage == 'train' else 'test') / Path(item['name']))
+    @staticmethod
+    def xywh_to_xyxy(x, y, w, h):
+        x1 = x
+        y1 = y
+        x2 = w - x1
+        y2 = h - y2
+        return (x1, y1, x2, y2)
 
-            classes = []
-            bboxes = []
-            if 'labels' in item.keys():
-                objects = item['labels']
-
-                for obj in objects:
-
-                    if obj['category'] in self.detection_cls:
-                        x1 = obj['box2d']['x1']
-                        y1 = obj['box2d']['y1']
-                        x2 = obj['box2d']['x2']
-                        y2 = obj['box2d']['y2']
-
-                        bbox = [x1, y1, x2 - x1, y2 - y1]  # bbox of form: (x, y, w, h) MSCOCO format
-                        cls = self.cls_to_idx[obj['category']]
-
-                        bboxes.append(bbox)
-                        classes.append(cls)
-
-                if len(classes) > 0:
-                    detection_db.append({
-                        'image_path': image_path,
-                        'bboxes': bboxes,
-                        'classes': classes
-                    })
-
-        return detection_db
-
-    def __create_db(self):
-        db = None
-        if self.task == 'detection':
-            db = self.__create_detection_db()
-
-        return db
 
     def image_transform(self, img):
         if self.transform is None:
@@ -152,13 +108,14 @@ class BDD(data.Dataset):
 
         return image
 
+    def __create_db(self):
+        raise NotImplementedError
+
+    def display_image(self, idx):
+        raise NotImplementedError
+
     def __len__(self):
         return len(self.db)
 
     def __getitem__(self, idx):
-        X = self.get_image(idx)
-        if self.task == 'detection':
-            labels = self.db[idx]
-            y = {'labels': torch.tensor(labels['classes']), 'boxes': torch.tensor(labels['bboxes'], dtype=torch.float32)}
-
-        return X, y
+        raise NotImplementedError

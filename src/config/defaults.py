@@ -35,4 +35,5 @@ _C.DATASET.PANOPTIC_CLASSES = ['unlabeled', 'dynamic', 'ego vehicle', 'ground', 
                                'traffic sign frame', 'terrain', 'vegetation', 'sky', 'person', 'rider', 'bicycle',
                                'bus', 'car', 'caravan', 'motorcycle', 'trailer', 'train', 'truck']
 
+
 cfg = _C
