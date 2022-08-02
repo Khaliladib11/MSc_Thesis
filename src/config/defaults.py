@@ -36,4 +36,9 @@ _C.DATASET.PANOPTIC_CLASSES = ['unlabeled', 'dynamic', 'ego vehicle', 'ground', 
                                'bus', 'car', 'caravan', 'motorcycle', 'trailer', 'train', 'truck']
 
 
+# Detection params
+_C.DETECTION = CN(new_allowed=True)
+_C.DETECTION.MODELS = ['Faster_RCNN']
+_C.DETECTION.BACKBONE = ['resnet50', 'resnet101', 'resnet152']
+
 cfg = _C
