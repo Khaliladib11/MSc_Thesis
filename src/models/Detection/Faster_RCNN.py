@@ -22,6 +22,8 @@ class Faster_RCNN(pl.LightningModule):
                  pretrained,
                  pretrained_backbone,
                  checkpoint_path,
+                 train_loader,
+                 val_loader
                  ):
         super(Faster_RCNN, self).__init__()
 
@@ -32,6 +34,8 @@ class Faster_RCNN(pl.LightningModule):
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.num_classes = num_classes
+        self.train_loader = train_loader
+        self.val_loader = val_loader
 
         if backbone == 'resnet50':
             self.model = fasterrcnn_resnet50_fpn(pretrained, pretrained_backbone)
@@ -57,20 +61,44 @@ class Faster_RCNN(pl.LightningModule):
         checkpoint = torch.load(Path(checkpoint))
         self.model.load_state_dict(checkpoint['model'])
 
+    def train_dataloader(self):
+        return self.train_loader
+
+    def val_dataloader(self):
+        return self.val_loader
+
     def training_step(self, train_batch, batch_idx):
         images, targets = train_batch
 
         targets = [{k: v for k, v in t.items()} for t in targets]
 
         loss_dict = self.model(images, targets)
-        loss = sum(loss for loss in loss_dict.values())
-        return {'loss': loss, 'log': loss_dict}
+        train_loss = sum(loss for loss in loss_dict.values())
+
+        #self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
+        return train_loss
+
+    def training_epoch_end(self, training_step_outputs):
+        epoch_losses = torch.stack(training_step_outputs)
+        loss_mean = torch.mean(epoch_losses)
+        self.log('training_loss', loss_mean)
 
     def validation_step(self, val_batch, batch_idx):
-        pass
+        images, targets = val_batch
 
-    def test_step(self, test_batch, batch_idx):
-        pass
+        targets = [{k: v for k, v in t.items()} for t in targets]
+
+        outputs = self.model(images, targets)
+
+        val_loss = sum(loss for loss in outputs.values())
+
+        return val_loss
+
+    def validation_epoch_end(self, validation_step_outputs):
+        epoch_losses = torch.stack(validation_step_outputs)
+        loss_mean = torch.mean(epoch_losses)
+        self.log('training_loss', loss_mean)
 
     def configure_optimizers(self):
         optimizer_params = {
