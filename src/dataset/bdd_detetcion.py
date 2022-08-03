@@ -1,4 +1,5 @@
 import os
+import random
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,16 +36,23 @@ class BDD_Detection(BDD):
             with open(db_path, 'r') as f:
                 self.db = json.load(f)
         else:
-            self.db = self.__create_db()
+            _db = self.__create_db()
+            self.db = self.split_data(_db)
+
+
 
     def __create_db(self, format='xyxy'):
         detection_db = deque()
-        labels_path = self.labels_root / Path('det_train.json' if self.stage == 'train' else 'det_val.json')
+        # labels_path = self.labels_root / Path('det_train.json' if self.stage == 'train' else 'det_val.json')
+        labels_path = self.labels_root / Path('det_val.json' if self.stage == 'test' else 'det_train.json')
         with open(labels_path, 'r') as labels_file:
             labels = json.load(labels_file)
 
+        random.shuffle(labels)
+
         for item in tqdm(labels):
-            image_path = str(self.images_root / Path('train' if self.stage == 'train' else 'test') / Path(item['name']))
+            # image_path = str(self.images_root / Path('train' if self.stage == 'train' else 'test') / Path(item['name']))
+            image_path = str(self.images_root / Path('val' if self.stage == 'test' else 'train') / Path(item['name']))
 
             classes = []
             bboxes = []
