@@ -1,4 +1,5 @@
 import os
+import random
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,8 +26,9 @@ class BDD(data.Dataset):
                  obj_cls,
                  db_path=None,
                  relative_path='..',
-                 image_size=(400, 400),
-                 transform=None
+                 image_size=400,
+                 transform=None,
+                 seed=356,
                  ):
         """
         Constructor for BDD class
@@ -38,7 +40,7 @@ class BDD(data.Dataset):
         :param image_size: tuple that contains the image size (w, h)
         :param transform: torchvision. Transforms as input
         """
-        assert stage in ['train', 'test'], "stage must be : 'train' or 'test'"
+        assert stage in ['train', 'val', 'test'], "stage must be : 'train' or 'test'"
 
         assert all(cls in cfg.DATASET.DETECTION_CLASSES for cls in
                    obj_cls), f"Please choose classes from the following: {cfg.DATASET.DETECTION_CLASSES} "
@@ -62,6 +64,8 @@ class BDD(data.Dataset):
         self.db = deque()
         self.cls_to_idx, self.idx_to_cls = self.create_idx()
 
+        random.seed(seed)
+
     def create_idx(self):
         cls_to_idx = {}
         idx_to_cls = {}
@@ -71,6 +75,18 @@ class BDD(data.Dataset):
             idx_to_cls[idx] = self.obj_cls[idx]
 
         return cls_to_idx, idx_to_cls
+
+    def split_data(self, db):
+        db = list(db)
+        if self.stage == 'train':
+            train_db = db[:55_000]
+            return deque(train_db)
+        elif self.stage == 'val':
+            val_db = db[55_000:]
+            return deque(val_db)
+
+        else:
+            return deque(db)
 
     @staticmethod
     def xyxy_to_xywh(x1, y1, x2, y2):
@@ -85,15 +101,14 @@ class BDD(data.Dataset):
         x1 = x
         y1 = y
         x2 = w - x1
-        y2 = h - y2
+        y2 = h - y1
         return (x1, y1, x2, y2)
-
 
     def image_transform(self, img):
         if self.transform is None:
             t_ = transforms.Compose([
-                transforms.resize(self.imgs_size),
-                transforms.toTensor(),
+                transforms.Resize((self.image_size, self.image_size)),
+                transforms.ToTensor(),
                 transforms.Normalize(mean=[0.407, 0.457, 0.485],
                                      std=[0.229, 0.224, 0.225])
             ])
@@ -107,6 +122,12 @@ class BDD(data.Dataset):
             image = self.image_transform(image)
 
         return image
+
+    def export_db(self, path):
+        print(f"Exporting {self.stage}_db DB...")
+        with open(os.path.join(path, f'{self.stage}_db.json'), "w") as outfile:
+            json.dump(list(self.db), outfile)
+        print(f"DB {self.stage}_db Exported.")
 
     def __create_db(self):
         raise NotImplementedError
