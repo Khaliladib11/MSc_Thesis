@@ -26,7 +26,7 @@ class BDD(data.Dataset):
                  obj_cls,
                  db_path=None,
                  relative_path='..',
-                 image_size=(400, 400),
+                 image_size=400,
                  transform=None,
                  seed=356,
                  ):
@@ -107,8 +107,8 @@ class BDD(data.Dataset):
     def image_transform(self, img):
         if self.transform is None:
             t_ = transforms.Compose([
-                transforms.Resize(self.imgs_size),
-                transforms.toTensor(),
+                transforms.Resize((self.image_size, self.image_size)),
+                transforms.ToTensor(),
                 transforms.Normalize(mean=[0.407, 0.457, 0.485],
                                      std=[0.229, 0.224, 0.225])
             ])

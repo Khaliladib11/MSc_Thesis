@@ -28,7 +28,7 @@ class BDD_Detection(BDD):
                           'traffic light'],
                  db_path=None,
                  relative_path='..',
-                 image_size=(400, 400),
+                 image_size=400,
                  transform=None):
         super(BDD_Detection, self).__init__(cfg, stage, obj_cls, db_path, relative_path, image_size, transform)
 
@@ -111,8 +111,8 @@ class BDD_Detection(BDD):
     def __getitem__(self, idx):
         X = self.get_image(idx, apply_transform=True)
         y = {
-            'labels': torch.tensor(self.db[idx]['classes']),
-            'boxes': torch.tensor(self.db[idx]['bboxes'])
+            'labels': torch.tensor(self.db[idx]['classes'], dtype=torch.int64),
+            'boxes': torch.tensor(self.db[idx]['bboxes'], dtype=torch.float)
         }
 
         return X, y

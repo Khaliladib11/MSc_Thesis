@@ -11,7 +11,7 @@ from torchvision.ops import box_iou
 import pytorch_lightning as pl
 
 
-class FasterRCNN(pl.LightningModule):
+class Faster_RCNN(pl.LightningModule):
 
     def __init__(self,
                  cfg,
@@ -23,7 +23,7 @@ class FasterRCNN(pl.LightningModule):
                  pretrained_backbone,
                  checkpoint_path,
                  ):
-        super(FasterRCNN, self).__init__()
+        super(Faster_RCNN, self).__init__()
 
         assert 0 <= learning_rate <= 1, "Learning Rate must be between 0 and 1"
         assert backbone in cfg.DETECTION.BACKBONE, f"Please choose backbone from the following: {cfg.DETECTION.BACKBONE}"
@@ -49,7 +49,7 @@ class FasterRCNN(pl.LightningModule):
         if checkpoint_path:
             self.load_checkpoint(checkpoint_path)
 
-    def forward(self, x):
+    def forward(self, x, *args, **kwargs):
         self.model.eval()
         return self.model(x)
 
@@ -69,11 +69,13 @@ class FasterRCNN(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         pass
 
+    def test_step(self, test_batch, batch_idx):
+        pass
+
     def configure_optimizers(self):
         optimizer_params = {
             'params': self.model.parameters(),
             'lr': self.learning_rate,
             'weight_decay': self.weight_decay,
-            'momentum': 0.9
         }
         return torch.optim.Adam(**optimizer_params)
