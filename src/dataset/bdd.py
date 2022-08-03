@@ -88,7 +88,6 @@ class BDD(data.Dataset):
         else:
             return deque(db)
 
-
     @staticmethod
     def xyxy_to_xywh(x1, y1, x2, y2):
         x = x1
@@ -108,7 +107,7 @@ class BDD(data.Dataset):
     def image_transform(self, img):
         if self.transform is None:
             t_ = transforms.Compose([
-                transforms.resize(self.imgs_size),
+                transforms.Resize(self.imgs_size),
                 transforms.toTensor(),
                 transforms.Normalize(mean=[0.407, 0.457, 0.485],
                                      std=[0.229, 0.224, 0.225])
@@ -123,6 +122,12 @@ class BDD(data.Dataset):
             image = self.image_transform(image)
 
         return image
+
+    def export_db(self, path):
+        print(f"Exporting {self.stage}_db DB...")
+        with open(os.path.join(path, f'{self.stage}_db.json'), "w") as outfile:
+            json.dump(list(self.db), outfile)
+        print(f"DB {self.stage}_db Exported.")
 
     def __create_db(self):
         raise NotImplementedError
