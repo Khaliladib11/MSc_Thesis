@@ -42,13 +42,10 @@ class BDD(data.Dataset):
         """
         assert stage in ['train', 'val', 'test'], "stage must be : 'train' or 'test'"
 
-        assert all(cls in cfg.DATASET.DETECTION_CLASSES for cls in
-                   obj_cls), f"Please choose classes from the following: {cfg.DATASET.DETECTION_CLASSES} "
-
         self.root = Path(relative_path) / Path(cfg.DATASET.ROOT)
         self.images_root = self.root / Path(cfg.DATASET.IMAGE_ROOT)
         self.labels_root = self.root / Path(cfg.DATASET.LABEL_ROOT)
-        self.drivable_root = self.root / Path(cfg.DATASET.DRIVABLE_AREA_MUSK)
+        self.drivable_root = self.root / Path(cfg.DATASET.DRIVABLE_AREA_MASK)
         self.semantic_segmentation_root = self.root / Path(cfg.DATASET.SEMANTIC_SEGMENTATION_ROOT)
         self.instance_segmentation_root = self.root / Path(cfg.DATASET.INSTANCE_SEGMENTATION_ROOT)
         self.panoptic_root = self.root / Path(cfg.DATASET.PANOPTIC_SEGMENTATION)

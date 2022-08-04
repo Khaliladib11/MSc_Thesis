@@ -16,10 +16,10 @@ from torchvision.utils import draw_bounding_boxes
 
 from .bdd import BDD
 
-
 COLOR_MAP = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
 
-class BDD_Detection(BDD):
+
+class BDDDetection(BDD):
 
     def __init__(self,
                  cfg,
@@ -32,14 +32,15 @@ class BDD_Detection(BDD):
                  transform=None):
         super(BDD_Detection, self).__init__(cfg, stage, obj_cls, db_path, relative_path, image_size, transform)
 
+        assert all(cls in cfg.DATASET.DETECTION_CLASSES for cls in
+                   obj_cls), f"Please choose classes from the following: {cfg.DATASET.DETECTION_CLASSES}"
+
         if db_path:
             with open(db_path, 'r') as f:
                 self.db = json.load(f)
         else:
             _db = self.__create_db()
             self.db = self.split_data(_db)
-
-
 
     def __create_db(self, format='xyxy'):
         detection_db = deque()
@@ -67,7 +68,7 @@ class BDD_Detection(BDD):
                         x2 = obj['box2d']['x2']
                         y2 = obj['box2d']['y2']
 
-                        #bbox = [x1, y1, x2 - x1, y2 - y1]  # bbox of form: (x, y, w, h) MSCOCO format
+                        # bbox = [x1, y1, x2 - x1, y2 - y1]  # bbox of form: (x, y, w, h) MSCOCO format
                         bbox = [x1, y1, x2, y2]
                         cls = self.cls_to_idx[obj['category']]
 

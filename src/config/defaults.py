@@ -12,7 +12,7 @@ _C.DATASET.LABEL_ROOT = 'labels/bdd100k_det_20_labels_trainval/bdd100k/labels/de
 _C.DATASET.SEMANTIC_SEGMENTATION_ROOT = ''
 _C.DATASET.INSTANCE_SEGMENTATION_ROOT = ''
 _C.DATASET.PANOPTIC_SEGMENTATION = ''
-_C.DATASET.DRIVABLE_AREA_MUSK = ''
+_C.DATASET.DRIVABLE_AREA_MASK = 'labels/bdd100k_drivable_labels_trainval/bdd100k/labels/drivable/masks'
 _C.DATASET.LANE_ROOT = ''
 _C.DATASET.TRAIN = 'train'
 _C.DATASET.TEST = 'val'
@@ -40,5 +40,10 @@ _C.DATASET.PANOPTIC_CLASSES = ['unlabeled', 'dynamic', 'ego vehicle', 'ground', 
 _C.DETECTION = CN(new_allowed=True)
 _C.DETECTION.MODELS = ['Faster_RCNN']
 _C.DETECTION.BACKBONE = ['resnet50', 'resnet101', 'resnet152']
+
+
+# Drivable Area Segmentation params
+_C.DRIVABLE_AREA = CN(new_allowed=True)
+
 
 cfg = _C
