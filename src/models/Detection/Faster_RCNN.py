@@ -57,10 +57,6 @@ class Faster_RCNN(pl.LightningModule):
         self.model.eval()
         return self.model(x)
 
-    def load_checkpoint(self, checkpoint):
-        checkpoint = torch.load(Path(checkpoint))
-        self.model.load_state_dict(checkpoint['model'])
-
     def train_dataloader(self):
         return self.train_loader
 

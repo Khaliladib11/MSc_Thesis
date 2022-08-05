@@ -1,1 +1,2 @@
-from .bdd_detetcion import BDD_Detection
+from .bdd_detetcion import BDDDetection
+from .bdd_drivable_segmentation import BDDDrivableSegmentation

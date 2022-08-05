@@ -1,11 +1,7 @@
 from torch.utils.data import DataLoader
 
 
-def collate_fn(batch):
-    return tuple(zip(*batch))
-
-
-def get_loader(dataset, batch_size, shuffle, pin_memory=False, drop_last=False):
+def get_loader(dataset, batch_size, shuffle, collate_fn=None, pin_memory=False, drop_last=False):
     params = {
         'dataset': dataset,
         'batch_size': batch_size,
