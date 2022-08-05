@@ -16,6 +16,7 @@ from .bdd import BDD
 
 COLOR_MAP = ['blue', 'red']
 
+
 class BDDDrivableSegmentation(BDD):
 
     def __init__(self,
@@ -41,7 +42,7 @@ class BDDDrivableSegmentation(BDD):
 
     def _get_mask(self, idx):
         mask = np.array(Image.open(str(self.db[idx])))
-        #mask = torch.tensor(mask, dtype=torch.uint8)
+        # mask = torch.tensor(mask, dtype=torch.uint8)
         return mask
 
     def get_image(self, idx, apply_transform=False):
@@ -63,10 +64,8 @@ class BDDDrivableSegmentation(BDD):
         plt.axis('off')
         plt.show()
 
-
-
     def __getitem__(self, idx):
         X = self.get_image(idx, apply_transform=True)
-        y = self._get_mask(idx)
+        y = torch.tensor(self._get_mask(idx))
 
         return X, y

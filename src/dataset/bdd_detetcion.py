@@ -30,7 +30,7 @@ class BDDDetection(BDD):
                  relative_path='..',
                  image_size=400,
                  transform=None):
-        super(BDD_Detection, self).__init__(cfg, stage, obj_cls, db_path, relative_path, image_size, transform)
+        super(BDDDetection, self).__init__(cfg, stage, obj_cls, db_path, relative_path, image_size, transform)
 
         assert all(cls in cfg.DATASET.DETECTION_CLASSES for cls in
                    obj_cls), f"Please choose classes from the following: {cfg.DATASET.DETECTION_CLASSES}"
@@ -108,6 +108,9 @@ class BDDDetection(BDD):
 
         plt.axis('off')
         plt.show()
+
+    def collate_fn(self, batch):
+        return tuple(zip(*batch))
 
     def __getitem__(self, idx):
         X = self.get_image(idx, apply_transform=True)
