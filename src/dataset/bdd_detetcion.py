@@ -16,7 +16,7 @@ from torchvision.utils import draw_bounding_boxes
 
 from .bdd import BDD
 
-COLOR_MAP = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+COLOR_MAP = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue']
 
 
 class BDDDetection(BDD):
@@ -59,21 +59,47 @@ class BDDDetection(BDD):
             bboxes = []
             if 'labels' in item.keys():
                 objects = item['labels']
-
+                # print(objects)
                 for obj in objects:
 
-                    if obj['category'] in self.obj_cls:
-                        x1 = obj['box2d']['x1']
-                        y1 = obj['box2d']['y1']
-                        x2 = obj['box2d']['x2']
-                        y2 = obj['box2d']['y2']
+                    category = obj['category']
+                    if category in self.obj_cls:
 
-                        # bbox = [x1, y1, x2 - x1, y2 - y1]  # bbox of form: (x, y, w, h) MSCOCO format
-                        bbox = [x1, y1, x2, y2]
-                        cls = self.cls_to_idx[obj['category']]
+                        if category == 'traffic light':
+                            # print(obj['attributes'])
+                            color = obj['attributes']['trafficLightColor']
+                            if color != 'NA':
+                                # print(color)
+                                category = "tl_" + color
 
-                        bboxes.append(bbox)
-                        classes.append(cls)
+                                x1 = obj['box2d']['x1']
+                                y1 = obj['box2d']['y1']
+                                x2 = obj['box2d']['x2']
+                                y2 = obj['box2d']['y2']
+
+                                # bbox = [x1, y1, x2 - x1, y2 - y1]  # bbox of form: (x, y, w, h) MSCOCO format
+                                if format == 'xyxy':
+                                    bbox = [x1, y1, x2, y2]
+
+                                cls = self.cls_to_idx[category]
+
+                                bboxes.append(bbox)
+                                classes.append(cls)
+                                
+                        else:
+                            x1 = obj['box2d']['x1']
+                            y1 = obj['box2d']['y1']
+                            x2 = obj['box2d']['x2']
+                            y2 = obj['box2d']['y2']
+
+                            # bbox = [x1, y1, x2 - x1, y2 - y1]  # bbox of form: (x, y, w, h) MSCOCO format
+                            if format == 'xyxy':
+                                bbox = [x1, y1, x2, y2]
+
+                            cls = self.cls_to_idx[category]
+
+                            bboxes.append(bbox)
+                            classes.append(cls)
 
                 if len(classes) > 0:
                     detection_db.append({

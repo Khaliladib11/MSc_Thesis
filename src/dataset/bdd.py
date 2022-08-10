@@ -8,6 +8,7 @@ from PIL import Image
 import json
 from tqdm import tqdm
 from collections import deque
+from sklearn.model_selection import train_test_split
 
 import torch
 from torch.utils import data
@@ -66,24 +67,48 @@ class BDD(data.Dataset):
     def create_idx(self):
         cls_to_idx = {}
         idx_to_cls = {}
+        idx = 0
 
-        for idx in range(len(self.obj_cls)):
-            cls_to_idx[self.obj_cls[idx]] = idx
-            idx_to_cls[idx] = self.obj_cls[idx]
+        for obj in self.obj_cls:
+            if obj == 'traffic light':
+                """
+                cls_to_idx['tl_NA'] = idx
+                idx_to_cls[idx] = 'tl_NA'
+                idx += 1
+                """
+
+                cls_to_idx['tl_G'] = idx
+                idx_to_cls[idx] = 'tl_G'
+                idx += 1
+
+                cls_to_idx['tl_R'] = idx
+                idx_to_cls[idx] = 'tl_R'
+                idx += 1
+
+                cls_to_idx['tl_Y'] = idx
+                idx_to_cls[idx] = 'tl_Y'
+                idx += 1
+
+            else:
+                cls_to_idx[self.obj_cls[idx]] = idx
+                idx_to_cls[idx] = self.obj_cls[idx]
+                idx += 1
 
         return cls_to_idx, idx_to_cls
 
-    def split_data(self, db):
+    def split_data(self, db, train_size=80):
         db = list(db)
+        to_idx = (train_size*len(db))//100
         if self.stage == 'train':
-            train_db = db[:55_000]
+            train_db = db[:to_idx]
             return deque(train_db)
         elif self.stage == 'val':
-            val_db = db[55_000:]
+            val_db = db[to_idx:]
             return deque(val_db)
 
         else:
             return deque(db)
+
 
     @staticmethod
     def xyxy_to_xywh(x1, y1, x2, y2):
