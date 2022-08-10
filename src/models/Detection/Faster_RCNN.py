@@ -71,17 +71,18 @@ class Faster_RCNN(pl.LightningModule):
         loss_dict = self.model(images, targets)
         train_loss = sum(loss for loss in loss_dict.values())
 
-        #self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        # self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
         return train_loss
 
     def training_epoch_end(self, training_step_outputs):
         epoch_losses = torch.tensor([batch_loss['loss'].item() for batch_loss in training_step_outputs])
-        #epoch_losses = torch.stack(training_step_outputs)
+        # epoch_losses = torch.stack(training_step_outputs)
         loss_mean = torch.mean(epoch_losses)
         self.log('training_loss', loss_mean)
 
     def validation_step(self, val_batch, batch_idx):
+        """
         images, targets = val_batch
 
         targets = [{k: v for k, v in t.items()} for t in targets]
@@ -91,11 +92,16 @@ class Faster_RCNN(pl.LightningModule):
         val_loss = sum(loss for loss in outputs.values())
 
         return val_loss
+        """
+        pass
 
     def validation_epoch_end(self, validation_step_outputs):
+        """
         epoch_losses = torch.stack(validation_step_outputs)
         loss_mean = torch.mean(epoch_losses)
         self.log('training_loss', loss_mean)
+        """
+        pass
 
     def configure_optimizers(self):
         optimizer_params = {
