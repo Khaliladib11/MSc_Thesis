@@ -76,7 +76,8 @@ class Faster_RCNN(pl.LightningModule):
         return train_loss
 
     def training_epoch_end(self, training_step_outputs):
-        epoch_losses = torch.stack(training_step_outputs)
+        epoch_losses = torch.tensor([batch_loss['loss'].item() for batch_loss in training_step_outputs])
+        #epoch_losses = torch.stack(training_step_outputs)
         loss_mean = torch.mean(epoch_losses)
         self.log('training_loss', loss_mean)
 

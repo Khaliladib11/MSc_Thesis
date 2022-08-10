@@ -21,7 +21,7 @@ _C.DATASET.IMAGE_FORMAT = 'jpg'
 _C.DATASET.TASKS = ['detection', 'drivable area segmentation', 'Lane Segmentation', 'semantic segmentation',
                     'instance segmentation', 'panoptic segmentation']
 
-_C.DATASET.DETECTION_CLASSES = ['pedestrian', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle',
+_C.DATASET.DETECTION_CLASSES = ['__bgr__', 'pedestrian', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle',
                                 'traffic light', 'traffic sign']
 _C.DATASET.SEGMENTATION_CLASSES = ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light', 'traffic '
                                                                                                              'sign',
