@@ -85,7 +85,7 @@ class BDDDetection(BDD):
 
                                 bboxes.append(bbox)
                                 classes.append(cls)
-                                
+
                         else:
                             x1 = obj['box2d']['x1']
                             y1 = obj['box2d']['y1']
