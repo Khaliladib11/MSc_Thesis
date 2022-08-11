@@ -103,7 +103,9 @@ class BDDDrivableSegmentation(BDD):
         :param idx: index of the image in db
         :return: img and mask
         """
-        img = self.get_image(idx, apply_transform=True)
-        mask = torch.tensor(self._get_mask(idx))
 
+        label = dict()
+        img = self.get_image(idx, apply_transform=True)
+        mask = torch.tensor(self._get_mask(idx), dtype=torch.long)
+        label['mask'] = mask
         return img, mask

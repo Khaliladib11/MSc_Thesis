@@ -2,9 +2,12 @@
 import torch
 import torch.nn as nn
 
+import torchvision
+
 from torchvision.models.segmentation import DeepLabV3
 from torchvision.models.segmentation import deeplabv3_resnet50, deeplabv3_resnet101, deeplabv3_mobilenet_v3_large
-from torchvision.models.segmentation import DeepLabV3_ResNet50_Weights, DeepLabV3_ResNet101_Weights, DeepLabV3_MobileNet_V3_Large_Weights
+from torchvision.models.segmentation import DeepLabV3_ResNet50_Weights, DeepLabV3_ResNet101_Weights, \
+    DeepLabV3_MobileNet_V3_Large_Weights
 from torchvision.models import ResNet50_Weights, ResNet101_Weights, MobileNet_V3_Large_Weights
 from torchvision.models.segmentation.deeplabv3 import DeepLabHead
 import pytorch_lightning as pl
@@ -55,7 +58,9 @@ class DeepLab(pl.LightningModule):
 
         self.model = self.__get_model(pretrained, pretrained_backbone)
 
-        self.loss_fc = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss()
+
+        self.imagenet_stats = [[0.485, 0.456, 0.406], [0.485, 0.456, 0.406]]
 
     def __get_model(self, pretrained: bool, pretrained_backbone: bool) -> DeepLabV3:
 
@@ -157,21 +162,43 @@ class DeepLab(pl.LightningModule):
 
     def training_step(self, train_batch, batch_idx):
         images, targets = train_batch
-        # targets = [{k: v for k, v in t.items()} for t in targets]
         outputs = self.model(images)['out']
-        train_loss = self.loss_function(self.logits(outputs), )
+        train_loss = self.criterion(outputs, targets['mask'])
         return train_loss
 
     def training_epoch_end(self, training_step_outputs):
-        epoch_losses = torch.stack(training_step_outputs)
-        loss_mean = torch.mean(epoch_losses)
-        self.log('training_loss', loss_mean)
+        train_loss_mean = torch.mean(torch.stack(training_step_outputs))
+        self.log('training_loss', train_loss_mean.item())
 
     def validation_step(self, val_batch, batch_idx):
-        pass
+        images, targets = val_batch
+        outputs = self.model(images)['out']
+        val_loss = self.criterion(outputs, targets['mask'])
+        return val_loss
 
     def validation_epoch_end(self, validation_step_outputs):
-        pass
+        val_loss_mean = torch.mean(torch.stack(validation_step_outputs))
+        self.log('training_loss', val_loss_mean.item())
+
+    def image_transform(self, image):
+        reprocess = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
+                                                    torchvision.transforms.Normalize(mean=self.imagenet_stats[0],
+                                                                                     std=self.imagenet_stats[1])])
+
+        return reprocess(image)
+
+    def predict_step(self, image):
+        input_tensor = self.image_transform(image).unsqueeze(0)
+
+        # Make the predictions for labels across the image
+        self.model.eval()
+        with torch.no_grad():
+            output = self.model(input_tensor)["out"][0]
+            output = output.argmax(0)
+
+        # Return the predictions
+
+        return output.cpu().numpy()
 
     def configure_optimizers(self):
         optimizer_params = {

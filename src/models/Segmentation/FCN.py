@@ -79,7 +79,7 @@ class FCN(pl.LightningModule):
         images, targets = train_batch
         #targets = [{k: v for k, v in t.items()} for t in targets]
         outputs = self.model(images)['out']
-        train_loss = self.loss_function(self.logits(outputs), )
+        train_loss = self.loss_function(self.logits(outputs),  targets['mask'])
         return train_loss
 
     def training_epoch_end(self, training_step_outputs):
