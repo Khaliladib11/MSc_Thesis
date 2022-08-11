@@ -44,7 +44,8 @@ _C.DETECTION.BACKBONE = ['resnet50', 'resnet101', 'resnet152']
 
 # Drivable Area Segmentation params
 _C.DRIVABLE_AREA = CN(new_allowed=True)
-_C.DRIVABLE_AREA.MODELS = ['FCN']
+_C.DRIVABLE_AREA.MODELS = ['FCN', 'DeepLab']
 _C.DRIVABLE_AREA.BACKBONE = ['resnet50', 'resnet101']
+_C.DRIVABLE_AREA.DEEPLAB_BACKBONE = ['resnet50', 'resnet101', 'mobilenet']
 
 cfg = _C

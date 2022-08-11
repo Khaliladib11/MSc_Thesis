@@ -6,7 +6,12 @@ import torch.nn as nn
 import torchvision
 
 from torchvision.models.segmentation import fcn_resnet50, fcn_resnet101
+from torchvision.models.segmentation import FCN_ResNet50_Weights, FCN_ResNet101_Weights
+from torchvision.models import ResNet50_Weights, ResNet101_Weights
+from torchvision.models.segmentation.fcn import FCNHead
 import pytorch_lightning as pl
+
+
 
 
 class FCN(pl.LightningModule):
@@ -17,7 +22,6 @@ class FCN(pl.LightningModule):
                  backbone,
                  learning_rate,
                  weight_decay,
-                 pretrained,
                  pretrained_backbone,
                  checkpoint_path,
                  train_loader,
@@ -35,18 +39,28 @@ class FCN(pl.LightningModule):
         self.train_loader = train_loader
         self.val_loader = val_loader
 
-        model_params = {
-            'pretrained_backbone': pretrained_backbone,
-            'pretrained': pretrained,
-            'num_classes': self.num_classes,
-            'aux_loss': True
-        }
-
         if backbone == 'resnet50':
-            self.model = fcn_resnet50(**model_params)
+            if pretrained_backbone:
+                model_params = {
+                    'weights': None,
+                    'weights_backbone': ResNet50_Weights.DEFAULT,
+                    'num_classes': self.num_classes,
+                }
+                self.model = fcn_resnet50(**model_params)
+            else:
+                self.model = fcn_resnet50(num_classes=self.num_classes)
 
         elif backbone == 'resnet101':
-            self.model = fcn_resnet101(**model_params)
+            if pretrained_backbone:
+                model_params = {
+                    'weights': None,
+                    'weights_backbone': ResNet101_Weights.DEFAULT,
+                    'num_classes': self.num_classes,
+                }
+                self.model = fcn_resnet101(**model_params)
+
+            else:
+                self.model = fcn_resnet101(num_classes=self.num_classes)
 
         self.logits = nn.LogSoftmax(dim=1)
         self.loss_function = nn.NLLLoss()
@@ -80,4 +94,9 @@ class FCN(pl.LightningModule):
         pass
 
     def configure_optimizers(self):
-        pass
+        optimizer_params = {
+            'params': self.model.parameters(),
+            'lr': self.learning_rate,
+            'weight_decay': self.weight_decay,
+        }
+        return torch.optim.Adam(**optimizer_params)
