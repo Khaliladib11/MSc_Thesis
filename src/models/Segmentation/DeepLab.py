@@ -43,7 +43,7 @@ class DeepLab(pl.LightningModule):
         super(DeepLab, self).__init__()
 
         assert 0 <= learning_rate <= 1, "Learning Rate must be between 0 and 1"
-        assert backbone in cfg.DETECTION.DEEPLAB_BACKBONE, f"Please choose backbone from the following: {cfg.DRIVABLE_AREA.DEEPLAB_BACKBONE} "
+        assert backbone in cfg.DRIVABLE_AREA.DEEPLAB_BACKBONE, f"Please choose backbone from the following: {cfg.DRIVABLE_AREA.DEEPLAB_BACKBONE} "
         assert num_classes > 0, "Number of classes must be greater than 0."
 
         self.learning_rate = learning_rate
@@ -98,7 +98,7 @@ class DeepLab(pl.LightningModule):
     def __get_deeplab_resnet101(self, pretrained, pretrained_backbone) -> DeepLabV3:
         if pretrained:
             model_params = {
-                'weights': DeepLabV3_ResNet50_Weights.DEFAULT
+                'weights': DeepLabV3_ResNet101_Weights.DEFAULT
             }
             model = deeplabv3_resnet101(**model_params)
             if self.num_classes != 21:
