@@ -33,6 +33,7 @@
 │ │ │ ├─Faster_RCNN.py # Faster RCNN class
 │ │ ├─Segmentation
 │ │ │ ├─FCN.py # FCN class
+│ │ │ ├─DeepLab.py # DeepLabv3+ class
 │ ├─utils
 │ │ ├─DataLoaders.py # some useful functions
 ├─doc
