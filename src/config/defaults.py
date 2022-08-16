@@ -29,6 +29,8 @@ _C.DATASET.SEGMENTATION_CLASSES = ['road', 'sidewalk', 'building', 'wall', 'fenc
                                    'vegetation', 'terrain', 'sky', 'person', 'rider', 'car', 'truck', 'bus', 'train',
                                    'motorcycle', 'bicycle']
 
+_C.DATASET.INSTANCE_CLASSES = ['__bgr__', 'bicycle', 'person', 'caravan', 'car', 'bus', 'train', 'trailer', 'motorcycle', 'truck', 'rider']
+
 _C.DATASET.PANOPTIC_CLASSES = ['unlabeled', 'dynamic', 'ego vehicle', 'ground', 'static', 'parking', 'rail track',
                                'road', 'sidewalk', 'bridge', 'building', 'fence', 'garage', 'guard rail', 'tunnel',
                                'wall', 'banner', 'billboard', 'lane divider', 'parking sign', 'pole', 'polegroup',
@@ -48,5 +50,8 @@ _C.DRIVABLE_AREA = CN(new_allowed=True)
 _C.DRIVABLE_AREA.MODELS = ['FCN', 'DeepLab']
 _C.DRIVABLE_AREA.BACKBONE = ['resnet50', 'resnet101']
 _C.DRIVABLE_AREA.DEEPLAB_BACKBONE = ['resnet50', 'resnet101', 'mobilenet']
+
+# Instance Segmentation params
+_C.INSTANCE_SEGMENTATION = CN(new_allowed=True)
 
 cfg = _C
