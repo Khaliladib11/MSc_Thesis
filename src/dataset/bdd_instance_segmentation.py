@@ -1,9 +1,12 @@
 # Import Libraries
+import os
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import json
+from collections import deque
+from tqdm import tqdm
 
 import torch
 import torchvision.transforms as transforms
@@ -39,7 +42,22 @@ class BDDInstanceSegmentation(BDD):
                                                       image_size=image_size,
                                                       transform=transform)
 
-        self.images_root = self.root / Path(cfg.DATASET.IMAGE_10K_ROOT)  # images root
+        # check if the classes are in the DETECTION_CLASSES
+        assert all(cls in cfg.DATASET.INSTANCE_CLASSES for cls in
+                   obj_cls), f"Please choose classes from the following: {cfg.DATASET.INSTANCE_CLASSES}"
+
+        if self.stage == 'train':
+            self.images_root = self.root / Path(cfg.DATASET.IMAGE_10K_ROOT + '/train')  # images root
+            self.instance_segmentation_root = self.root / Path(
+                cfg.DATASET.INSTANCE_SEGMENTATION_ROOT+'/train')  # ins seg masks root
+            self.polygon_root = self.root / Path(
+                cfg.DATASET.INSTANCE_SEGMENTATION_POLYGON_ROOT + '/ins_seg_train.json')  # polygon root
+        elif self.stage == 'test':
+            self.images_root = self.root / Path(cfg.DATASET.IMAGE_10K_ROOT + '/val')  # images root
+            self.instance_segmentation_root = self.root / Path(
+                cfg.DATASET.INSTANCE_SEGMENTATION_ROOT + '/val')  # ins seg masks root
+            self.polygon_root = self.root / Path(
+                cfg.DATASET.INSTANCE_SEGMENTATION_POLYGON_ROOT + '/ins_seg_val.json')  # polygon root
 
         _db = self.__create_db()
         self.db = self.split_data(_db)
@@ -47,10 +65,44 @@ class BDDInstanceSegmentation(BDD):
     def __create_db(self):
         """
         method to create the db of the class
-        :return: list ot Pathlib objects of the masks
+        :return: deque object contains the necessary information
         """
-        masks_path = self.instance_segmentation_root / Path('val' if self.stage == 'test' else 'train')
-        return list(masks_path.glob('**/*.png'))
+        polygon_annotation = deque(self.__load_annotations())
+        db = deque()
+        for polygon in tqdm(polygon_annotation):
+            filtered_labels = self.__filter_labels(polygon['labels'])
+
+            if len(filtered_labels):
+                db.append({
+                    'image_path': self.images_root / Path(polygon['name']),
+                    'mask_path': self.instance_segmentation_root / Path(polygon['name'].replace('.jpg', '.png')),
+                    'labels': filtered_labels
+                })
+
+        return db
+
+    def __load_annotations(self):
+        """
+        method to load the annotation from json
+        :return: list of annotations
+        """
+        with open(self.polygon_root, 'r') as f:
+            polygon_annotation = json.load(f)
+
+        return polygon_annotation
+
+    def __filter_labels(self, labels):
+        """
+        method to filter the labels according to the objects passed to the constructor
+        :param labels: list of dictionaries for the objects in the image
+        :return: list of filtered labels
+        """
+        filtered_labels = []
+        for label in labels:
+            if label['category'] in self.obj_cls:
+                filtered_labels.append(label)
+
+        return filtered_labels
 
     def get_image(self, idx, apply_transform=False):
         """
@@ -59,21 +111,21 @@ class BDDInstanceSegmentation(BDD):
         :param apply_transform: Boolean value, if we want to apply the transform or not
         :return: PIL image or Tensor type
         """
-        image_name = str(self.db[idx]).split('\\')[-1].replace('.png', '.jpg')
-        image_path = str(self.images_root / Path('val' if self.stage == 'test' else 'train') / image_name)
+        image_path = self.db[idx]['image_path']
         image = Image.open(image_path)
         if apply_transform:
             image = self.image_transform(image)
 
         return image
 
-    def _get_mask(self, idx):
+    def get_mask(self, idx):
         """
         method to get the mask of the image
         :param idx: index of the mask in the db
         :return: np array
         """
-        mask = np.array(Image.open(str(self.db[idx])))
+        mask_path = self.db[idx]['mask_path']
+        mask = np.array(Image.open(mask_path))
         # mask = torch.tensor(mask, dtype=torch.uint8)
         return mask
 
@@ -82,7 +134,7 @@ class BDDInstanceSegmentation(BDD):
         raise NotImplementedError
 
     def __len__(self):
-        pass
+        return len(self.db)
 
     def __getitem__(self, idx):
         pass
