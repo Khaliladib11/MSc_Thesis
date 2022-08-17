@@ -64,6 +64,23 @@ class BDDInstanceSegmentation(BDD):
         _db = self.__create_db()
         self.db = self.split_data(_db)
 
+    def image_transform(self, img):
+        """
+        image transform if the given one is None
+        :param img: PIL image
+        :return: image tensor with applied transform on it
+        """
+        if self.transform is None:
+            t_ = transforms.Compose([
+                transforms.Resize((self.image_size, self.image_size)),  # resize the image
+                transforms.ToTensor(),  # convert the image to tensor
+                transforms.Normalize(mean=[0.407, 0.457, 0.485],
+                                     std=[0.229, 0.224, 0.225])  # normalize the image using mean ans std
+            ])
+            return t_(img)
+        else:
+            return self.transform(img)
+
     def __create_db(self):
         """
         method to create the db of the class
@@ -106,6 +123,23 @@ class BDDInstanceSegmentation(BDD):
 
         return filtered_labels
 
+    def image_transform(self, img):
+        """
+        image transform if the given one is None
+        :param img: PIL image
+        :return: image tensor with applied transform on it
+        """
+        if self.transform is None:
+            t_ = transforms.Compose([
+                transforms.Resize((self.image_size, self.image_size)),  # resize the image
+                transforms.ToTensor(),  # convert the image to tensor
+                transforms.Normalize(mean=[0.407, 0.457, 0.485],
+                                     std=[0.229, 0.224, 0.225])  # normalize the image using mean ans std
+            ])
+            return t_(img)
+        else:
+            return self.transform(img)
+
     def get_image(self, idx, apply_transform=False):
         """
         method to return the image
@@ -114,7 +148,7 @@ class BDDInstanceSegmentation(BDD):
         :return: PIL image or Tensor type
         """
         image_path = self.db[idx]['image_path']
-        image = Image.open(image_path)
+        image = Image.open(image_path).convert('RGB')
         if apply_transform:
             image = self.image_transform(image)
 
@@ -131,7 +165,7 @@ class BDDInstanceSegmentation(BDD):
         # mask = torch.tensor(mask, dtype=torch.uint8)
         return mask
 
-    def _get_masks(self, idx):
+    def _get_labels(self, idx):
         image_annotation = self.db[idx]
         mask_shape = np.array(Image.open(image_annotation['mask_path'])).shape
         target = {}
@@ -162,4 +196,13 @@ class BDDInstanceSegmentation(BDD):
         return len(self.db)
 
     def __getitem__(self, idx):
-        pass
+        image = self.get_image(idx, True)
+        target = self._get_labels(idx)
+
+        target['boxes'] = torch.stack(target['boxes'], dim=1).squeeze()
+
+        target['labels'] = torch.tensor(target['labels'], dtype=torch.int64)
+
+        target['masks'] = torch.tensor(np.array(target['masks'], dtype=np.uint8))
+
+        return image, target
