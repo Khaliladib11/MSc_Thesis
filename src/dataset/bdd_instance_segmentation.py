@@ -8,6 +8,8 @@ import json
 from collections import deque
 from tqdm import tqdm
 
+from .bdd_utils import to_mask, bbox_from_instance_mask
+
 import torch
 import torchvision.transforms as transforms
 
@@ -49,7 +51,7 @@ class BDDInstanceSegmentation(BDD):
         if self.stage == 'train':
             self.images_root = self.root / Path(cfg.DATASET.IMAGE_10K_ROOT + '/train')  # images root
             self.instance_segmentation_root = self.root / Path(
-                cfg.DATASET.INSTANCE_SEGMENTATION_ROOT+'/train')  # ins seg masks root
+                cfg.DATASET.INSTANCE_SEGMENTATION_ROOT + '/train')  # ins seg masks root
             self.polygon_root = self.root / Path(
                 cfg.DATASET.INSTANCE_SEGMENTATION_POLYGON_ROOT + '/ins_seg_train.json')  # polygon root
         elif self.stage == 'test':
@@ -128,6 +130,29 @@ class BDDInstanceSegmentation(BDD):
         mask = np.array(Image.open(mask_path))
         # mask = torch.tensor(mask, dtype=torch.uint8)
         return mask
+
+    def _get_masks(self, idx):
+        image_annotation = self.db[idx]
+        mask_shape = np.array(Image.open(image_annotation['mask_path'])).shape
+        target = {}
+        boxes = []
+        masks = []
+        labels = []
+        for label in image_annotation['labels']:
+            poly2d = label['poly2d'][0]['vertices']
+            mask = to_mask(mask_shape, poly2d)
+            box = bbox_from_instance_mask(mask)
+            label = self.cls_to_idx[label['category']]
+
+            masks.append(mask)
+            boxes.append(box)
+            labels.append(label)
+
+        target['boxes'] = boxes
+        target['labels'] = labels
+        target['masks'] = masks
+
+        return target
 
     # method to display the image, task specific, to be implemented in the children classes
     def display_image(self, idx):
