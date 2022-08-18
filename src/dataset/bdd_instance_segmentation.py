@@ -3,19 +3,23 @@ import os
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import albumentations as A
+import cv2
 from PIL import Image
 import json
 from collections import deque
 from tqdm import tqdm
 
-from .bdd_utils import to_mask, bbox_from_instance_mask
+from .bdd_utils import to_mask, bbox_from_instance_mask, get_coloured_mask
 
 import torch
 import torchvision.transforms as transforms
 
 from .bdd import BDD
 
+# Define color map to be used when displaying the images with bounding boxes
+COLOR_MAP = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue']
 
 class BDDInstanceSegmentation(BDD):
     """
@@ -201,8 +205,27 @@ class BDDInstanceSegmentation(BDD):
         return target
 
     # method to display the image, task specific, to be implemented in the children classes
-    def display_image(self, idx):
-        raise NotImplementedError
+    def display_image(self, image, masks, boxes, labels):
+        if isinstance(image, Image.Image):
+            image = np.array(image)
+        for mask in masks:
+            rgb_mask = get_coloured_mask(mask)
+            image = cv2.addWeighted(image, 1, rgb_mask, 0.5, 0)
+
+        fig, ax = plt.subplots(figsize=(20,20))
+        ax.imshow(image)
+        for i, mask in enumerate(labels):
+            bbox = boxes[i]
+            rect = patches.Rectangle((bbox[0], bbox[1]), bbox[2] - bbox[0], bbox[3] - bbox[1],
+                                     edgecolor=COLOR_MAP[labels[i]],
+                                     facecolor="none", linewidth=2)
+            plt.text(bbox[0], bbox[1], self.idx_to_cls[labels[i]], verticalalignment="top",
+                     color=COLOR_MAP[labels[i]])
+
+            ax.add_patch(rect)
+
+        plt.axis('off')
+        plt.show()
 
     def __len__(self):
         return len(self.db)
