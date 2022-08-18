@@ -41,4 +41,16 @@
 ├─notebooks
 │ ├─Faster RCNN Notebook.ipynb # Faster RCNN notebook
 │ ├─FCN Notebook.ipynb # FCN notebook
+├─dataset
+│ ├─bdd100k
+│ │ ├─images
+│ │ │ ├─10K
+│ │ │ ├─100K
+│ │ ├─labels
+│ │ │ ├─det_20
+│ │ │ ├─drivable
+│ │ │ ├─lane
+│ │ │ ├─pan_seg
+│ │ │ ├─ins_seg
+│ │ │ ├─pan_seg
 ```
