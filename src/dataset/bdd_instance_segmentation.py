@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+import albumentations as A
 from PIL import Image
 import json
 from collections import deque
@@ -64,22 +65,34 @@ class BDDInstanceSegmentation(BDD):
         _db = self.__create_db()
         self.db = self.split_data(_db)
 
-    def image_transform(self, img):
+    def data_augmentation(self, image, masks, bboxes, labels):
         """
-        image transform if the given one is None
-        :param img: PIL image
-        :return: image tensor with applied transform on it
+        method to apply image augmentation technics to reduce overfitting
+        :param image: numpy array with shape of HxWx3 (RGB image)
+        :param masks: list of masks, each mask must have the same W and H with the image (2D mask)
+        :param bboxes: list of bounding boxes, each box must have (xmin, ymin, xmax, ymax)
+        :param labels: idx of the labels
+        :return: image, masks, bboxes
         """
-        if self.transform is None:
-            t_ = transforms.Compose([
-                transforms.Resize((self.image_size, self.image_size)),  # resize the image
-                transforms.ToTensor(),  # convert the image to tensor
-                transforms.Normalize(mean=[0.407, 0.457, 0.485],
-                                     std=[0.229, 0.224, 0.225])  # normalize the image using mean ans std
-            ])
-            return t_(img)
-        else:
-            return self.transform(img)
+        class_labels = [self.idx_to_cls[label] for label in labels]
+        for idx, box in enumerate(bboxes):
+            box.append(class_labels[idx])
+
+        augmentation_transform = A.Compose([
+            A.HorizontalFlip(p=0.5),  # Random Flip with 0.5 probability
+            A.CropAndPad(px=100, p=0.5),  # crop and add padding with 0.5 probability
+            A.PixelDropout(dropout_prob=0.01, p=0.5),  # pixel dropout with 0.5 probability
+        ], bbox_params=A.BboxParams(format='pascal_voc', min_visibility=0.3))  # return bbox with xyxy format
+
+        transformed = augmentation_transform(image=image, masks=masks, bboxes=bboxes)
+
+        boxes = []
+        for box in transformed['bboxes']:
+            box = list(box)
+            box.pop()
+            boxes.append(box)
+
+        return transformed['image'], transformed['masks'], boxes
 
     def __create_db(self):
         """
@@ -131,7 +144,6 @@ class BDDInstanceSegmentation(BDD):
         """
         if self.transform is None:
             t_ = transforms.Compose([
-                transforms.Resize((self.image_size, self.image_size)),  # resize the image
                 transforms.ToTensor(),  # convert the image to tensor
                 transforms.Normalize(mean=[0.407, 0.457, 0.485],
                                      std=[0.229, 0.224, 0.225])  # normalize the image using mean ans std
@@ -178,7 +190,7 @@ class BDDInstanceSegmentation(BDD):
             box = bbox_from_instance_mask(mask)
             label = self.cls_to_idx[label['category']]
 
-            masks.append(mask)
+            masks.append(np.array(mask, dtype=np.uint8))
             boxes.append(box)
             labels.append(label)
 
@@ -196,13 +208,17 @@ class BDDInstanceSegmentation(BDD):
         return len(self.db)
 
     def __getitem__(self, idx):
-        image = self.get_image(idx, True)
+        image = self.get_image(idx, False)
         target = self._get_labels(idx)
 
-        target['boxes'] = torch.stack(target['boxes'], dim=1).squeeze()
+        image, masks, bboxes = self.data_augmentation(np.array(image), target['masks'], target['boxes'], target['labels'])
+
+        target['boxes'] = torch.tensor(bboxes)
 
         target['labels'] = torch.tensor(target['labels'], dtype=torch.int64)
 
         target['masks'] = torch.tensor(np.array(target['masks'], dtype=np.uint8))
+
+        image = self.image_transform(image)
 
         return image, target
