@@ -153,7 +153,6 @@ class BDD(data.Dataset):
         """
         if self.transform is None:
             t_ = transforms.Compose([
-                transforms.Resize((self.image_size, self.image_size)),  # resize the image
                 transforms.ToTensor(),  # convert the image to tensor
                 transforms.Normalize(mean=[0.407, 0.457, 0.485],
                                      std=[0.229, 0.224, 0.225])  # normalize the image using mean ans std

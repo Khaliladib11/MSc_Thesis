@@ -90,13 +90,17 @@ class BDDInstanceSegmentation(BDD):
 
         transformed = augmentation_transform(image=image, masks=masks, bboxes=bboxes)
 
-        boxes = []
+        transformed_boxes = []
+        transformed_labels = []
         for box in transformed['bboxes']:
             box = list(box)
-            box.pop()
-            boxes.append(box)
+            label = box.pop()
+            transformed_boxes.append(box)
+            transformed_labels.append(label)
 
-        return transformed['image'], transformed['masks'], boxes
+        labels = [self.cls_to_idx[label] for label in transformed_labels]
+
+        return transformed['image'], transformed['masks'], transformed_boxes, labels
 
     def __create_db(self):
         """
@@ -234,11 +238,11 @@ class BDDInstanceSegmentation(BDD):
         image = self.get_image(idx, False)
         target = self._get_labels(idx)
 
-        image, masks, bboxes = self.data_augmentation(np.array(image), target['masks'], target['boxes'], target['labels'])
+        image, masks, bboxes, labels = self.data_augmentation(np.array(image), target['masks'], target['boxes'], target['labels'])
 
         target['boxes'] = torch.tensor(bboxes)
 
-        target['labels'] = torch.tensor(target['labels'], dtype=torch.int64)
+        target['labels'] = torch.tensor(labels, dtype=torch.int64)
 
         target['masks'] = torch.tensor(np.array(target['masks'], dtype=np.uint8))
 
