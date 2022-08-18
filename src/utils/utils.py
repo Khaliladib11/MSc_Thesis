@@ -1,0 +1,72 @@
+# Import Libraries
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.path import Path
+import torch
+from torchvision.io import read_image
+from torchvision.ops import masks_to_boxes
+
+from torchvision.utils import draw_bounding_boxes
+
+
+############################################################
+#  Bounding Boxes
+############################################################
+
+
+def extract_bbox_from_mask(mask_path):
+    """
+    Function to extract bounding boxes from masks
+    :param mask_path: str, path for the mask
+    :return: Tensor contains the bounding boxes
+    """
+    mask = read_image(mask_path)  # read the mask as a tensor type
+    obj_ids = torch.unique(mask)  # get the unique colors
+    obj_ids = obj_ids[:-1]  # get rid of the last color which is 2 (in my case 2 is the background)
+
+    masks = mask == obj_ids[:, None, None]  # split the color-encoded mask into a set of boolean masks.
+    boxes = masks_to_boxes(masks)  # get the bounding boxes
+
+    return boxes
+
+
+############################################################
+#  Masks
+############################################################
+
+def to_mask(mask_shape, poly2d):
+    """
+    function to convert 2D polygon to 2D mask
+    :param mask_shape: the shape of the mask we want to return
+    :param poly2d: a list of x and y coordinates
+    :return: np.array object
+    """
+    nx, ny = mask_shape[1], mask_shape[0]
+    # Create vertex coordinates for each grid cell...
+    # (<0,0> is at the top left of the grid in this system)
+    x, y = np.meshgrid(np.arange(nx), np.arange(ny))
+    x, y = x.flatten(), y.flatten()
+
+    points = np.vstack((x, y)).T
+
+    path = Path(poly2d)
+    grid = path.contains_points(points)
+    grid = grid.reshape((ny, nx))
+
+    return grid
+
+
+def bbox_from_instance_mask(mask_path):
+    """
+    Function to extract bounding boxes from masks
+    :param mask_path: str, path for the mask
+    :return: Tensor contains the bounding boxes
+    """
+    mask = read_image(mask_path)  # read the mask as a tensor type
+    obj_ids = torch.unique(mask)  # get the unique colors
+    obj_ids = obj_ids[1:]  # get rid of the last color which is 2 (in my case 2 is the background)
+
+    masks = mask == obj_ids[:, None, None]  # split the color-encoded mask into a set of boolean masks.
+    boxes = masks_to_boxes(masks)  # get the bounding boxes
+
+    return boxes

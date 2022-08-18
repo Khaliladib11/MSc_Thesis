@@ -20,6 +20,7 @@ class BDDDetection(BDD):
     """
     BDDDetection class, specific class for the detection task on BDD100K dataset
     """
+
     def __init__(self,
                  cfg,
                  stage,
@@ -157,8 +158,8 @@ class BDDDetection(BDD):
                                      facecolor="none", linewidth=2)
             ax.add_patch(rect)
             if display_labels:
-                ax.text(bbox[0], bbox[1] - 20, self.idx_to_cls[classes[i]], bbox={'facecolor': COLOR_MAP[classes[i]]},
-                        fontsize=10)
+                plt.text(bbox[0], bbox[1], self.idx_to_cls[classes[i]], verticalalignment="top", color="white",
+                         bbox={'facecolor': COLOR_MAP[classes[i]], 'pad': 0})
 
         plt.axis('off')
         plt.show()
