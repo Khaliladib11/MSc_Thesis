@@ -1,9 +1,12 @@
 # Import Libraries
 import random
 from pathlib import Path
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from PIL import Image
+import albumentations as A
+import cv2
 import json
 from tqdm import tqdm
 from collections import deque
@@ -138,6 +141,39 @@ class BDDDetection(BDD):
         # finally, return the db
         return detection_db
 
+    def data_augmentation(self, image, bboxes, labels):
+        """
+        method to apply image augmentation technics to reduce overfitting
+        :param image: numpy array with shape of HxWx3 (RGB image)
+        :param bboxes: list of bounding boxes, each box must have (xmin, ymin, xmax, ymax)
+        :param labels: idx of the labels
+        :return: image, masks, bboxes
+        """
+
+        class_labels = [self.idx_to_cls[label] for label in labels]
+        for idx, box in enumerate(bboxes):
+            box.append(class_labels[idx])
+
+        augmentation_transform = A.Compose([
+            A.HorizontalFlip(p=0.5),  # Random Flip with 0.5 probability
+            A.CropAndPad(px=100, p=0.5),  # crop and add padding with 0.5 probability
+            A.PixelDropout(dropout_prob=0.01, p=0.5),  # pixel dropout with 0.5 probability
+        ], bbox_params=A.BboxParams(format='pascal_voc', min_visibility=0.3))  # return bbox with xyxy format
+
+        transformed = augmentation_transform(image=image, bboxes=bboxes)
+
+        transformed_boxes = []
+        transformed_labels = []
+        for box in transformed['bboxes']:
+            box = list(box)
+            label = box.pop()
+            transformed_boxes.append(box)
+            transformed_labels.append(label)
+
+        labels = [self.cls_to_idx[label] for label in transformed_labels]
+
+        return transformed['image'], transformed_boxes, labels
+
     # method to display the image with the bounding boxes
     def display_image(self, idx, display_labels=True):
         image = self.get_image(idx, apply_transform=False)
@@ -174,10 +210,14 @@ class BDDDetection(BDD):
         :param idx: index of the image in db
         :return: img and targets
         """
-        img = self.get_image(idx, apply_transform=True)
+        image = self.get_image(idx, apply_transform=False)
+        labels = self.db[idx]['classes']
+        bboxes = self.db[idx]['bboxes']
+        image, boxes, labels = self.data_augmentation(np.array(image), bboxes, labels)
+        image = self.image_transform(image)
         targets = {
-            'labels': torch.tensor(self.db[idx]['classes'], dtype=torch.int64),
-            'boxes': torch.tensor(self.db[idx]['bboxes'], dtype=torch.float)
+            'labels': torch.tensor(labels, dtype=torch.int64),
+            'boxes': torch.tensor(boxes, dtype=torch.float)
         }
 
-        return img, targets
+        return image, targets

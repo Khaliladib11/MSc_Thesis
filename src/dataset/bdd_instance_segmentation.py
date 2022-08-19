@@ -3,18 +3,23 @@ import os
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import albumentations as A
+import cv2
 from PIL import Image
 import json
 from collections import deque
 from tqdm import tqdm
 
-from .bdd_utils import to_mask, bbox_from_instance_mask
+from .bdd_utils import to_mask, bbox_from_instance_mask, get_coloured_mask
 
 import torch
 import torchvision.transforms as transforms
 
 from .bdd import BDD
 
+# Define color map to be used when displaying the images with bounding boxes
+COLOR_MAP = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue']
 
 class BDDInstanceSegmentation(BDD):
     """
@@ -64,22 +69,38 @@ class BDDInstanceSegmentation(BDD):
         _db = self.__create_db()
         self.db = self.split_data(_db)
 
-    def image_transform(self, img):
+    def data_augmentation(self, image, masks, bboxes, labels):
         """
-        image transform if the given one is None
-        :param img: PIL image
-        :return: image tensor with applied transform on it
+        method to apply image augmentation technics to reduce overfitting
+        :param image: numpy array with shape of HxWx3 (RGB image)
+        :param masks: list of masks, each mask must have the same W and H with the image (2D mask)
+        :param bboxes: list of bounding boxes, each box must have (xmin, ymin, xmax, ymax)
+        :param labels: idx of the labels
+        :return: image, masks, bboxes
         """
-        if self.transform is None:
-            t_ = transforms.Compose([
-                transforms.Resize((self.image_size, self.image_size)),  # resize the image
-                transforms.ToTensor(),  # convert the image to tensor
-                transforms.Normalize(mean=[0.407, 0.457, 0.485],
-                                     std=[0.229, 0.224, 0.225])  # normalize the image using mean ans std
-            ])
-            return t_(img)
-        else:
-            return self.transform(img)
+        class_labels = [self.idx_to_cls[label] for label in labels]
+        for idx, box in enumerate(bboxes):
+            box.append(class_labels[idx])
+
+        augmentation_transform = A.Compose([
+            A.HorizontalFlip(p=0.5),  # Random Flip with 0.5 probability
+            A.CropAndPad(px=100, p=0.5),  # crop and add padding with 0.5 probability
+            A.PixelDropout(dropout_prob=0.01, p=0.5),  # pixel dropout with 0.5 probability
+        ], bbox_params=A.BboxParams(format='pascal_voc', min_visibility=0.3))  # return bbox with xyxy format
+
+        transformed = augmentation_transform(image=image, masks=masks, bboxes=bboxes)
+
+        transformed_boxes = []
+        transformed_labels = []
+        for box in transformed['bboxes']:
+            box = list(box)
+            label = box.pop()
+            transformed_boxes.append(box)
+            transformed_labels.append(label)
+
+        labels = [self.cls_to_idx[label] for label in transformed_labels]
+
+        return transformed['image'], transformed['masks'], transformed_boxes, labels
 
     def __create_db(self):
         """
@@ -131,7 +152,6 @@ class BDDInstanceSegmentation(BDD):
         """
         if self.transform is None:
             t_ = transforms.Compose([
-                transforms.Resize((self.image_size, self.image_size)),  # resize the image
                 transforms.ToTensor(),  # convert the image to tensor
                 transforms.Normalize(mean=[0.407, 0.457, 0.485],
                                      std=[0.229, 0.224, 0.225])  # normalize the image using mean ans std
@@ -178,7 +198,7 @@ class BDDInstanceSegmentation(BDD):
             box = bbox_from_instance_mask(mask)
             label = self.cls_to_idx[label['category']]
 
-            masks.append(mask)
+            masks.append(np.array(mask, dtype=np.uint8))
             boxes.append(box)
             labels.append(label)
 
@@ -189,20 +209,43 @@ class BDDInstanceSegmentation(BDD):
         return target
 
     # method to display the image, task specific, to be implemented in the children classes
-    def display_image(self, idx):
-        raise NotImplementedError
+    def display_image(self, image, masks, boxes, labels):
+        if isinstance(image, Image.Image):
+            image = np.array(image)
+        for mask in masks:
+            rgb_mask = get_coloured_mask(mask)
+            image = cv2.addWeighted(image, 1, rgb_mask, 0.5, 0)
+
+        fig, ax = plt.subplots(figsize=(20,20))
+        ax.imshow(image)
+        for i, mask in enumerate(labels):
+            bbox = boxes[i]
+            rect = patches.Rectangle((bbox[0], bbox[1]), bbox[2] - bbox[0], bbox[3] - bbox[1],
+                                     edgecolor=COLOR_MAP[labels[i]],
+                                     facecolor="none", linewidth=2)
+            plt.text(bbox[0], bbox[1], self.idx_to_cls[labels[i]], verticalalignment="top",
+                     color=COLOR_MAP[labels[i]])
+
+            ax.add_patch(rect)
+
+        plt.axis('off')
+        plt.show()
 
     def __len__(self):
         return len(self.db)
 
     def __getitem__(self, idx):
-        image = self.get_image(idx, True)
+        image = self.get_image(idx, False)
         target = self._get_labels(idx)
 
-        target['boxes'] = torch.stack(target['boxes'], dim=1).squeeze()
+        image, masks, bboxes, labels = self.data_augmentation(np.array(image), target['masks'], target['boxes'], target['labels'])
 
-        target['labels'] = torch.tensor(target['labels'], dtype=torch.int64)
+        target['boxes'] = torch.tensor(bboxes)
+
+        target['labels'] = torch.tensor(labels, dtype=torch.int64)
 
         target['masks'] = torch.tensor(np.array(target['masks'], dtype=np.uint8))
+
+        image = self.image_transform(image)
 
         return image, target
