@@ -30,7 +30,7 @@ _C.DATASET.SEGMENTATION_CLASSES = ['road', 'sidewalk', 'building', 'wall', 'fenc
                                    'vegetation', 'terrain', 'sky', 'person', 'rider', 'car', 'truck', 'bus', 'train',
                                    'motorcycle', 'bicycle']
 
-_C.DATASET.INSTANCE_CLASSES = ['__bgr__', 'bicycle', 'person', 'caravan', 'car', 'bus', 'train', 'trailer', 'motorcycle', 'truck', 'rider']
+_C.DATASET.INSTANCE_CLASSES = ['__bgr__', 'bicycle', 'person', 'caravan', 'car', 'bus', 'train', 'trailer', 'motorcycle','truck', 'rider']
 
 _C.DATASET.PANOPTIC_CLASSES = ['unlabeled', 'dynamic', 'ego vehicle', 'ground', 'static', 'parking', 'rail track',
                                'road', 'sidewalk', 'bridge', 'building', 'fence', 'garage', 'guard rail', 'tunnel',

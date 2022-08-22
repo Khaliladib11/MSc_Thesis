@@ -29,7 +29,7 @@ class BDDInstanceSegmentation(BDD):
     def __init__(self,
                  cfg,
                  stage,
-                 obj_cls=['__bgr__', 'person', 'car', 'rider', 'bicycle', 'motorcycle'],
+                 obj_cls=['__bgr__', 'person', 'car', 'rider', 'bicycle', 'motorcycle', 'truck', 'bus'],
                  relative_path='..',
                  image_size=400,
                  transform=None):
@@ -83,7 +83,7 @@ class BDDInstanceSegmentation(BDD):
             box.append(class_labels[idx])
 
         augmentation_transform = A.Compose([
-            A.HorizontalFlip(p=0.5),  # Random Flip with 0.5 probability
+            A.HorizontalFlip(p=1),  # Random Flip with 0.5 probability
             A.CropAndPad(px=100, p=0.5),  # crop and add padding with 0.5 probability
             A.PixelDropout(dropout_prob=0.01, p=0.5),  # pixel dropout with 0.5 probability
         ], bbox_params=A.BboxParams(format='pascal_voc', min_visibility=0.3))  # return bbox with xyxy format
@@ -231,6 +231,11 @@ class BDDInstanceSegmentation(BDD):
         plt.axis('off')
         plt.show()
 
+
+    # collate function to be used with the dataloader, since the not all the images has the same number of objects
+    def collate_fn(self, batch):
+        return tuple(zip(*batch))
+
     def __len__(self):
         return len(self.db)
 
@@ -244,7 +249,7 @@ class BDDInstanceSegmentation(BDD):
 
         target['labels'] = torch.tensor(labels, dtype=torch.int64)
 
-        target['masks'] = torch.tensor(np.array(target['masks'], dtype=np.uint8))
+        target['masks'] = torch.tensor(np.array(masks, dtype=np.uint8))
 
         image = self.image_transform(image)
 
