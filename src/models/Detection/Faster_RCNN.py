@@ -13,7 +13,6 @@ from torchvision.models.detection import FasterRCNN_ResNet50_FPN_V2_Weights
 from torchvision.models import ResNet50_Weights
 from torchvision.ops import box_iou
 import pytorch_lightning as pl
-from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
 
 class Faster_RCNN(pl.LightningModule):
@@ -37,9 +36,6 @@ class Faster_RCNN(pl.LightningModule):
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.num_classes = num_classes
-
-        self.metric = MeanAveragePrecision(box_format="xyxy", class_metrics=True)
-
         self.save_hyperparameters()
 
         if backbone == 'resnet50':
@@ -93,27 +89,22 @@ class Faster_RCNN(pl.LightningModule):
         self.log('training_loss', loss_mean)
 
     def validation_step(self, val_batch, batch_idx):
+        self.model.train()
         images, targets = val_batch
 
         targets = [{k: v for k, v in t.items()} for t in targets]
 
-        outputs = self.model(images)
+        outputs = self.model(images, targets)
 
-        if outputs[0]["boxes"].shape[0] == 0:
-            # no box detected, 0 IOU
-            self.metric.update(torch.tensor(0.0), targets)
-        else:
-            self.metric.update(outputs, targets)
+        val_loss = sum(loss for loss in outputs.values())
+        return val_loss
 
     def validation_epoch_end(self, validation_step_outputs):
-        mAPs = self.metric.compute()
-        self.log_dict({
-            'map': mAPs['map'],
-            'map_50': mAPs['map_50'],
-            'map_75': mAPs['map_75']
-        })
+        epoch_losses = torch.tensor([batch_loss.item() for batch_loss in validation_step_outputs])
+        # epoch_losses = torch.stack(training_step_outputs)
+        loss_mean = torch.mean(epoch_losses)
+        self.log('val_loss', loss_mean)
 
-        self.metric.reset()
 
     def configure_optimizers(self):
         optimizer_params = {
