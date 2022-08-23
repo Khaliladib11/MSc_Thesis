@@ -108,9 +108,9 @@ class Faster_RCNN(pl.LightningModule):
     def validation_epoch_end(self, validation_step_outputs):
         mAPs = self.metric.compute()
         self.log_dict({
-            'mAP at 0.50:0.05:0.95': mAPs['map'],
-            'mAP at 0.50': mAPs['map_50'],
-            'mAP at 0.75': mAPs['map_75']
+            'map': mAPs['map'],
+            'map_50': mAPs['map_50'],
+            'map_75': mAPs['map_75']
         })
 
         self.metric.reset()
