@@ -35,7 +35,13 @@
 │ │ │ ├─FCN.py # FCN class
 │ │ │ ├─DeepLab.py # DeepLabv3+ class
 │ ├─utils
-│ │ ├─DataLoaders.py # some useful functions
+│ │ ├─DataLoaders.py # dataloader function
+| | ├─utils.py # useful function
+| | ├─Data Augmentation.ipynb # Notebook contains tutorial for data augmentation
+│ ├─BDD Detection.ipynb # Notebook contains tutorial how to use detection class
+│ ├─BDD Drivable Area.ipynb # Notebook contains tutorial how to use drivable class
+│ ├─BDD Instance Segmentation.ipynb # Notebook contains tutorial how to use instance segmentation class
+│ ├─YOLO Format.ipynb # Notebook contains tutorial how convert xyxy format to yolo format
 ├─doc
 │ ├─images # some images
 ├─notebooks
@@ -54,3 +60,27 @@
 │ │ │ ├─ins_seg
 │ │ │ ├─pan_seg
 ```
+
+---
+## Train
+### Object Detection
+1- To train using **Faster RCNN** please take a look at the [Faster RCNN](https://github.com/Khaliladib11/MSc_Thesis/blob/main/notebooks/Faster%20RCNN%20Notebook.ipynb).
+
+2- To train using yolo you have to follow these steps:
+ - Clone the yolov5 in outside the folder of this project
+```
+git clone https://github.com/ultralytics/yolov5
+```
+ - Install all dependencies (recommadation: Create new virtual envirement when working with yolov5):
+   ```
+   cd ../yolov5
+   pip install -r requirements.txt
+   ```
+ - Prepare the annotation to the YOLO format. Check the [YOLO notebook](https://github.com/Khaliladib11/MSc_Thesis/blob/main/src/YOLO%20Format.ipynb) for more details.
+ 
+ - train the model:
+    ```
+   !python train.py --img 640 --cfg yolov5m.yaml --batch 1 --epochs 30 --data dataset.yaml --weights yolov5m.pt --name yolo_bdd
+   ```
+   For more information follow this [Tutorials](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data).
+---
