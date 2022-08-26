@@ -108,6 +108,12 @@ class Faster_RCNN(pl.LightningModule):
         self.log('val_loss', loss_mean)
         return {'val_loss': loss_mean}
 
+    def predict_step(self, batch):
+        self.model.eval()
+        images, targets = batch
+        outputs = self.model(images)
+        return outputs
+
     def configure_optimizers(self):
         optimizer_params = {
             'params': self.model.parameters(),
