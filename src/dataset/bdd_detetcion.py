@@ -140,6 +140,7 @@ class BDDDetection(BDD):
         # finally, return the db
         return detection_db
 
+    # method to apply data augmentation
     def data_augmentation(self, image, bboxes, labels):
         """
         method to apply image augmentation technics to reduce overfitting

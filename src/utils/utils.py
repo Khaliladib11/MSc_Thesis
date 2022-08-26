@@ -1,5 +1,10 @@
 # Import Libraries
 import numpy as np
+import os
+import shutil
+from collections import deque
+from tqdm import tqdm
+from PIL import Image
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import torch
@@ -29,6 +34,84 @@ def extract_bbox_from_mask(mask_path):
 
     return boxes
 
+
+############################################################
+#  Data Format
+############################################################
+
+# method to convert xyxy to xywh yolo format
+def convert_pascal_to_yolo(xmin, ymin, xmax, ymax, img_w, img_h):
+    dw = 1. / (img_w)
+    dh = 1. / (img_h)
+    x = (xmin + xmax) / 2.0 - 1
+    y = (ymin + ymax) / 2.0 - 1
+    w = xmax - xmin
+    h = ymax - ymin
+    x = round(x * dw, 4)
+    w = round(w * dw, 4)
+    y = round(y * dh, 4)
+    h = round(h * dh, 4)
+    return (x, y, w, h)
+
+
+def create_yolo_annotation(bdd):
+    """
+    method to convert to create new db from the bdd.db object that have yolo format
+    :param bdd: BDD class instance
+    :return: yolo_deque object that has all the annotation in yolo format
+    """
+    yolo_deque = deque()
+    # YOLO_Format = namedtuple("YOLO", "cls x y w h")
+    print("Start converting.")
+    for item in tqdm(bdd.db):
+        image_path = item['image_path']
+        image = Image.open(image_path)
+        width, height = image.size
+        boxes = item['bboxes']
+        classes = item['classes']
+        yolo_boxes = []
+        for i, box in enumerate(boxes):
+            cls = classes[i] - 1
+            x, y, w, h = convert_pascal_to_yolo(box[0], box[1], box[2], box[3], width, height)
+            # yolo_format = YOLO_Format(cls, x, y, w, h)
+            yolo_boxes.append([cls, x, y, w, h])
+
+        yolo_deque.append({
+            'image_name': item['image_path'].split('\\')[-1],
+            'image_path': image_path,
+            'width': width,
+            'height': height,
+            'yolo_boxes': yolo_boxes
+        })
+    print("Finish from converting")
+    return yolo_deque
+
+
+def move_files(yolo_deque, folder_destination, stage):
+    """
+    method to copy the files from the original source to a new destination
+    :param yolo_deque: deque object, which is the output of the create_yolo_annotation method
+    :param folder_destination: the path to the folder where we want to copy the files to
+    :param stage: the stage, it can be: train, val or test to know in which file we should upload the images and annotations
+    :return: None
+    """
+    assert os.path.isdir(folder_destination), "Folder does not exist!"
+
+    print("Start copying files.")
+    for item in tqdm(yolo_deque):
+        shutil.copy(item['image_path'], os.path.join(folder_destination, 'images', stage))
+        create_annotation_file(item, folder_destination, stage)
+    print(f"All files are in {folder_destination} now.")
+
+
+def create_annotation_file(yolo_item, folder_destination, stage):
+    text_file_name = yolo_item['image_name'].replace('.jpg', '.txt')
+    file_path = os.path.join(folder_destination, 'labels', stage, text_file_name)
+    file = open(file_path, 'a')
+    for line in yolo_item['yolo_boxes']:
+        file.write(" ".join(str(item) for item in line))
+        file.write('\n')
+    file.close()
 
 ############################################################
 #  Masks
