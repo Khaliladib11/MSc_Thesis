@@ -1,0 +1,10 @@
+# train and val data
+train: ../dataset/train
+val: ../dataset/val
+test: ../dataset/test
+
+# number of classes
+nc: 7
+
+# class names
+names: ['pedestrian', 'car', 'rider', 'bicycle', 'motorcycle', 'truck', 'bus']
