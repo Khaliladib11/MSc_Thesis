@@ -1,12 +1,10 @@
-import os
-import random
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-import json
-from tqdm import tqdm
-from collections import deque
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
 
 import torch
 from torch.utils import data
@@ -46,6 +44,32 @@ class BDDDrivableSegmentation(BDD):
 
         _db = self.__create_db()
         self.db = self.split_data(_db)
+
+    def data_augmentation(self):
+        if self.stage == 'train':
+            compose = A.Compose([
+                A.Resize(height=self.image_size, width=self.image_size),
+                A.Rotate(limit=35, p=0.5),
+                A.HorizontalFlip(p=0.5),
+                A.VerticalFlip(p=0.1),
+                A.Normalize(
+                    mean=[0.0, 0.0, 0.0],
+                    std=[1.0, 1.0, 1.0]
+                ),
+                ToTensorV2()
+            ])
+
+        else:
+            compose = A.Compose([
+                A.Resize(height=self.image_size, width=self.image_size),
+                A.Normalize(
+                    mean=[0.407, 0.457, 0.485],
+                    sstd=[0.229, 0.224, 0.225]
+                ),
+                ToTensorV2()
+            ])
+
+        return compose
 
     def __create_db(self):
         """
@@ -105,7 +129,11 @@ class BDDDrivableSegmentation(BDD):
         """
 
         label = dict()
-        img = self.get_image(idx, apply_transform=True)
-        mask = torch.tensor(self._get_mask(idx), dtype=torch.long)
-        label['mask'] = mask
+        img = self.get_image(idx, apply_transform=False)
+        mask = self._get_mask(idx)
+        augmentation = self.transform(image=img, mask=mask)
+        image = augmentation['image']
+        mask = augmentation['mask']
+        # mask = torch.tensor(self._get_mask(idx), dtype=torch.long)
+        mask = mask.long()
         return img, mask

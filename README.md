@@ -60,27 +60,100 @@
 │ │ │ ├─ins_seg
 │ │ │ ├─pan_seg
 ```
+---
+## Requirements
+
+Please install requirements using: 
+```bash
+pip install -R requirements.txt
+```
 
 ---
 ## Train
 ### Object Detection
-1- To train using **Faster RCNN** please take a look at the [Faster RCNN](https://github.com/Khaliladib11/MSc_Thesis/blob/main/notebooks/Faster%20RCNN%20Notebook.ipynb).
-
-2- To train using yolo you have to follow these steps:
- - Clone the yolov5 in outside the folder of this project
+#### Faster RCNN
+To train F**aster RCNN** model run the following command:
+```bash
+python train.py --model fasterrcnn  --data './data/fasterrcnn.yaml' --batch-size 1 --img-size 640 --total_epochs 20
 ```
+Where `model` to specify that we want **Faster RCNN** model, `batch-size` for batch size, `img-size` for resizing the images and finally `--total_epochs` for the epochs.
+
+#### Yolov5
+To train using **Yolov5**:
+
+1- Create new virtual env using `virtualenv` or `conda` then activate it.
+2- Clone **Yolov5** repository outside this project:
+```bash
+cd ..
 git clone https://github.com/ultralytics/yolov5
 ```
- - Install all dependencies (recommadation: Create new virtual envirement when working with yolov5):
-   ```
-   cd ../yolov5
+3- Install all dependencies (recommendation: Create new virtual environment when working with yolov5):
+   ```bash
+   cd yolov5
    pip install -r requirements.txt
    ```
- - Prepare the annotation to the YOLO format. Check the [YOLO notebook](https://github.com/Khaliladib11/MSc_Thesis/blob/main/src/YOLO%20Format.ipynb) for more details.
- 
- - train the model:
-    ```
-   !python train.py --img 640 --cfg yolov5m.yaml --batch 1 --epochs 30 --data dataset.yaml --weights yolov5m.pt --name yolo_bdd
+4- Create folder for the dataset inside yolov5 folder:
+```bash
+mkdir dataset
+cd dataset
+mkdir images labels
+mkdir train test val
+cd ..
+cd labels
+mkdir train test val
+```
+5- Create `dataset.yaml` file and place it inside `yolov5/data` (you can copy the one in data folder).
+
+6- Prepare the data to be aligned with the YOLO format:
+```bash
+cd ../MSc_Thesis
+python prepare.py --yolo_version yolov5 --dataset_path '../yolov5/dataset'
+```
+5- train the model:
+```bash
+cd ../yolov5
+python train.py --img 640 --batch 1 --epochs 30 --data './data/dataset_yolov5.yaml' --weights yolov5m.pt --name yolo_bdd
+```
+For more information follow this [Tutorials](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data).
+
+#### Yolov7
+Almost the same as [Yolov5](####Yolov5)
+1- Create new virtual env using `virtualenv` or `conda` then activate it.
+2- Clone **Yolov7** repository outside this project:
+```bash
+cd ..
+git clone https://github.com/WongKinYiu/yolov7.git
+```
+3- Install all dependencies (recommendation: Create new virtual environment when working with yolov5):
+   ```bash
+   cd yolov7
+   pip install -r requirements.txt
    ```
-   For more information follow this [Tutorials](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data).
+4- Create folder for the dataset inside **yolov7** folder:
+```bash
+mkdir dataset
+cd dataset
+mkdir train test val
+cd train
+mkdir images labels
+cd ../test
+mkdir images labels
+cd ../val
+mkdir images labels
+```
+5- Create `dataset.yaml` file and place it inside `yolov7/data` (you can copy the one in data folder).
+
+6- Prepare the data to be aligned with the YOLO format:
+```bash
+cd ../MSc_Thesis
+python prepare.py --yolo_version yolov7 --dataset_path '../yolov7/dataset'
+```
+5- train the model:
+```bash
+cd ../yolov7
+python train.py --img 640 --batch 1 --epochs 30 --data './data/dataset_yolov7.yaml' --weights yolov5m.pt --name yolo_bdd
+```
+For more information follow this [Tutorials](https://blog.paperspace.com/yolov7/).
+
+
 ---

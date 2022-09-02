@@ -87,26 +87,30 @@ def create_yolo_annotation(bdd):
     return yolo_deque
 
 
-def move_files(yolo_deque, folder_destination, stage):
+def move_files(yolo_deque, images_folder_destination, labels_folder_destination):
     """
     method to copy the files from the original source to a new destination
     :param yolo_deque: deque object, which is the output of the create_yolo_annotation method
-    :param folder_destination: the path to the folder where we want to copy the files to
-    :param stage: the stage, it can be: train, val or test to know in which file we should upload the images and annotations
+    :param images_folder_destination: the path to the folder where we want to copy the images to
+    :param labels_folder_destination: the path to the folder where we want to create the labels (txt files)
     :return: None
     """
-    assert os.path.isdir(folder_destination), "Folder does not exist!"
+    assert os.path.isdir(images_folder_destination), "Folder does not exist!"
+    assert os.path.isdir(labels_folder_destination), "Folder does not exist!"
 
     print("Start copying files.")
     for item in tqdm(yolo_deque):
-        shutil.copy(item['image_path'], os.path.join(folder_destination, 'images', stage))
-        create_annotation_file(item, folder_destination, stage)
-    print(f"All files are in {folder_destination} now.")
+        # shutil.copy(item['image_path'], os.path.join(folder_destination, 'images', stage))
+        # create_annotation_file(item, folder_destination, stage)
+        shutil.copy(item['image_path'], images_folder_destination)
+        create_annotation_file(item, labels_folder_destination)
+
+    print(f"All images are in {images_folder_destination} and all labels are in {labels_folder_destination}.")
 
 
-def create_annotation_file(yolo_item, folder_destination, stage):
+def create_annotation_file(yolo_item, labels_folder_destination):
     text_file_name = yolo_item['image_name'].replace('.jpg', '.txt')
-    file_path = os.path.join(folder_destination, 'labels', stage, text_file_name)
+    file_path = os.path.join(labels_folder_destination, text_file_name)
     file = open(file_path, 'a')
     for line in yolo_item['yolo_boxes']:
         file.write(" ".join(str(item) for item in line))
