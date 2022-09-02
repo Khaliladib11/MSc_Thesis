@@ -60,7 +60,7 @@ def get_fasterrcnn(num_classes: int = 91,
         else:
             model = fasterrcnn_mobilenet_v3_large_fpn()
 
-    # if the number of classes different than 91 (the number of classes of MSCOCO)
+    # if the number of classes different from 91 (the number of classes of MSCOCO)
     # in case we want to use pretrained weights
     if num_classes != 91:
         in_features = model.roi_heads.box_predictor.cls_score.in_features

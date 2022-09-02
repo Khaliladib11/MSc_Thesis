@@ -3,14 +3,7 @@ import torch
 import torch.nn as nn
 
 import torchvision
-
-from torchvision.models.segmentation import DeepLabV3
-from torchvision.models.segmentation import deeplabv3_resnet50, deeplabv3_resnet101, deeplabv3_mobilenet_v3_large
-from torchvision.models.segmentation import DeepLabV3_ResNet50_Weights, DeepLabV3_ResNet101_Weights, \
-    DeepLabV3_MobileNet_V3_Large_Weights
-from torchvision.models import ResNet50_Weights, ResNet101_Weights, MobileNet_V3_Large_Weights
-from torchvision.models.segmentation.deeplabv3 import DeepLabHead
-import pytorch_lightning as pl
+from segmentation_models import get_deeplab
 
 from torch.utils.data import DataLoader
 
@@ -56,99 +49,11 @@ class DeepLab(pl.LightningModule):
         self.train_loader = train_loader
         self.val_loader = val_loader
 
-        self.model = self.__get_model(pretrained, pretrained_backbone)
+        self.model = self.get_deeplab(self.num_classes, self.backbone, pretrained, pretrained_backbone)
 
         self.criterion = nn.CrossEntropyLoss()
 
         self.imagenet_stats = [[0.485, 0.456, 0.406], [0.485, 0.456, 0.406]]
-
-    def __get_model(self, pretrained: bool, pretrained_backbone: bool) -> DeepLabV3:
-
-        if self.backbone == 'resnet50':
-            model = self.__get_deeplab_resnet50(pretrained, pretrained_backbone)
-
-        elif self.backbone == 'resnet101':
-            model = self.__get_deeplab_resnet101(pretrained, pretrained_backbone)
-
-        elif self.backbone == 'mobilenet':
-            model = self.__get_deeplab_mobile_net(pretrained, pretrained_backbone)
-
-        return model
-
-    def __get_deeplab_resnet50(self, pretrained: bool, pretrained_backbone: bool) -> DeepLabV3:
-        if pretrained:
-            model_params = {
-                'weights': DeepLabV3_ResNet101_Weights.DEFAULT
-            }
-            model = deeplabv3_resnet50(**model_params)
-            if self.num_classes != 21:
-                model.classifier = DeepLabHead(2048, self.num_classes)
-
-        elif pretrained_backbone:
-            model_params = {
-                'weights_backbone': ResNet50_Weights.DEFAULT
-            }
-            model = deeplabv3_resnet50(**model_params)
-            if self.num_classes != 21:
-                model.classifier = DeepLabHead(2048, self.num_classes)
-
-        else:
-            model_params = {
-                'num_classes': self.num_classes
-            }
-            model = deeplabv3_resnet50(**model_params)
-
-        return model
-
-    def __get_deeplab_resnet101(self, pretrained, pretrained_backbone) -> DeepLabV3:
-        if pretrained:
-            model_params = {
-                'weights': DeepLabV3_ResNet101_Weights.DEFAULT
-            }
-            model = deeplabv3_resnet101(**model_params)
-            if self.num_classes != 21:
-                model.classifier = DeepLabHead(2048, self.num_classes)
-
-        elif pretrained_backbone:
-            model_params = {
-                'weights_backbone': ResNet101_Weights.DEFAULT
-            }
-            model = deeplabv3_resnet101(**model_params)
-            if self.num_classes != 21:
-                model.classifier = DeepLabHead(2048, self.num_classes)
-
-        else:
-            model_params = {
-                'num_classes': self.num_classes
-            }
-            model = deeplabv3_resnet101(**model_params)
-
-        return model
-
-    def __get_deeplab_mobile_net(self, pretrained, pretrained_backbone) -> DeepLabV3:
-        if pretrained:
-            model_params = {
-                'weights': DeepLabV3_MobileNet_V3_Large_Weights.DEFAULT
-            }
-            model = deeplabv3_mobilenet_v3_large(**model_params)
-            if self.num_classes != 21:
-                model.classifier = DeepLabHead(2048, self.num_classes)
-
-        elif pretrained_backbone:
-            model_params = {
-                'weights_backbone': MobileNet_V3_Large_Weights.DEFAULT
-            }
-            model = deeplabv3_mobilenet_v3_large(**model_params)
-            if self.num_classes != 21:
-                model.classifier = DeepLabHead(2048, self.num_classes)
-
-        else:
-            model_params = {
-                'num_classes': self.num_classes
-            }
-            model = deeplabv3_mobilenet_v3_large(**model_params)
-
-        return model
 
     def forward(self, x):
         self.model.eval()
