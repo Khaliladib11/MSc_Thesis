@@ -2,16 +2,7 @@ import json
 from pathlib import Path
 
 import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-import torchvision
-
-from torchvision.models.detection import FasterRCNN
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor, fasterrcnn_resnet50_fpn, \
-    fasterrcnn_resnet50_fpn_v2, fasterrcnn_mobilenet_v3_large_fpn
-from torchvision.models.detection import FasterRCNN_ResNet50_FPN_V2_Weights, FasterRCNN_MobileNet_V3_Large_FPN_Weights
-from torchvision.models import ResNet50_Weights, MobileNet_V3_Large_Weights
-from torchvision.ops import box_iou
+from detection_models import get_fasterrcnn
 import pytorch_lightning as pl
 
 
@@ -25,7 +16,6 @@ class Faster_RCNN(pl.LightningModule):
                  weight_decay,
                  pretrained,
                  pretrained_backbone,
-                 checkpoint_path,
                  ):
         super(Faster_RCNN, self).__init__()
 
@@ -38,46 +28,7 @@ class Faster_RCNN(pl.LightningModule):
         self.num_classes = num_classes
         self.save_hyperparameters()
 
-        if backbone == 'resnet50':
-            if pretrained:
-                params_ = {
-                    'weights': FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT,
-                    'weights_backbone': ResNet50_Weights.DEFAULT
-                }
-                self.model = fasterrcnn_resnet50_fpn_v2(**params_)
-
-            elif pretrained_backbone:
-                params_ = {
-                    'weights_backbone': ResNet50_Weights.DEFAULT
-                }
-                self.model = fasterrcnn_resnet50_fpn_v2(**params_)
-            else:
-                self.model = fasterrcnn_resnet50_fpn_v2()
-
-            in_features = self.model.roi_heads.box_predictor.cls_score.in_features
-            self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-
-        elif backbone == 'MobileNetV3-Large':
-            if pretrained:
-                params_ = {
-                    'weights': FasterRCNN_MobileNet_V3_Large_FPN_Weights.DEFAULT,
-                    'weights_backbone': MobileNet_V3_Large_Weights.DEFAULT
-                }
-                self.model = fasterrcnn_mobilenet_v3_large_fpn(**params_)
-
-            elif pretrained_backbone:
-                params_ = {
-                    'weights_backbone': MobileNet_V3_Large_Weights.DEFAULT
-                }
-                self.model = fasterrcnn_mobilenet_v3_large_fpn(**params_)
-            else:
-                self.model = fasterrcnn_mobilenet_v3_large_fpn()
-
-            in_features = self.model.roi_heads.box_predictor.cls_score.in_features
-            self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, self.num_classes)
-
-        if checkpoint_path:
-            self.load_checkpoint(checkpoint_path)
+        self.model = get_fasterrcnn(self.num_classes, self.backbone, pretrained, pretrained_backbone)
 
     def forward(self, x, *args, **kwargs):
         return self.model(x)

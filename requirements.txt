@@ -1,0 +1,12 @@
+# Requirements file
+# Usage: pip install -r requirements.txt
+
+torch
+torchvision
+numpy
+pillow
+tqdm
+matplotlib
+albumentations
+opencv-python
+yacs

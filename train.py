@@ -114,7 +114,6 @@ if __name__ == '__main__':
             'weight_decay': 1e-3,
             'pretrained': True,
             'pretrained_backbone': True,
-            'checkpoint_path': None,
         }
         model = Faster_RCNN(**faster_rcnn_params)
 
