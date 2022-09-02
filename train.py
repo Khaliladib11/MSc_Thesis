@@ -42,7 +42,7 @@ if __name__ == '__main__':
     model = args.model
 
     with open(args.data, 'r') as f:
-        data = yaml.safe_load(f)  # data from .yamel file
+        data = yaml.safe_load(f)  # data from .yaml file
 
     obj_cls = data['classes']  # the classes we want to work one
     relative_path = data['relative_path']  # relative path to the dataset
