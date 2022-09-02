@@ -43,7 +43,7 @@ _C.DATASET.PANOPTIC_CLASSES = ['unlabeled', 'dynamic', 'ego vehicle', 'ground', 
 # Detection params
 _C.DETECTION = CN(new_allowed=True)
 _C.DETECTION.MODELS = ['Faster_RCNN']
-_C.DETECTION.BACKBONE = ['resnet50', 'resnet101', 'resnet152']
+_C.DETECTION.BACKBONE = ['resnet50', 'MobileNetV3-Large']
 
 
 # Drivable Area Segmentation params

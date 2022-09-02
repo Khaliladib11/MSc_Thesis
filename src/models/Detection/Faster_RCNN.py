@@ -8,9 +8,9 @@ import torchvision
 
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor, fasterrcnn_resnet50_fpn, \
-    fasterrcnn_resnet50_fpn_v2
-from torchvision.models.detection import FasterRCNN_ResNet50_FPN_V2_Weights
-from torchvision.models import ResNet50_Weights
+    fasterrcnn_resnet50_fpn_v2, fasterrcnn_mobilenet_v3_large_fpn
+from torchvision.models.detection import FasterRCNN_ResNet50_FPN_V2_Weights, FasterRCNN_MobileNet_V3_Large_FPN_Weights
+from torchvision.models import ResNet50_Weights, MobileNet_V3_Large_Weights
 from torchvision.ops import box_iou
 import pytorch_lightning as pl
 
@@ -57,12 +57,24 @@ class Faster_RCNN(pl.LightningModule):
             in_features = self.model.roi_heads.box_predictor.cls_score.in_features
             self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
 
-        else:
-            resnet_backbone = torchvision.models.detection.backbone_utils.resnet_fpn_backbone(
-                backbone,
-                pretrained_backbone
-            )
-            self.model = FasterRCNN(resnet_backbone, num_classes)
+        elif backbone == 'MobileNetV3-Large':
+            if pretrained:
+                params_ = {
+                    'weights': FasterRCNN_MobileNet_V3_Large_FPN_Weights.DEFAULT,
+                    'weights_backbone': MobileNet_V3_Large_Weights.DEFAULT
+                }
+                self.model = fasterrcnn_mobilenet_v3_large_fpn(**params_)
+
+            elif pretrained_backbone:
+                params_ = {
+                    'weights_backbone': MobileNet_V3_Large_Weights.DEFAULT
+                }
+                self.model = fasterrcnn_mobilenet_v3_large_fpn(**params_)
+            else:
+                self.model = fasterrcnn_mobilenet_v3_large_fpn()
+
+            in_features = self.model.roi_heads.box_predictor.cls_score.in_features
+            self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, self.num_classes)
 
         if checkpoint_path:
             self.load_checkpoint(checkpoint_path)
