@@ -3,7 +3,9 @@ import yaml
 import argparse
 
 from src.models.Detection.Faster_RCNN import Faster_RCNN
+from src.models.Segmentation.MaskRCNN import Mask_RCNN
 from src.dataset.bdd_detetcion import BDDDetection
+from src.dataset.bdd_instance_segmentation import BDDInstanceSegmentation
 from src.config.defaults import cfg
 from src.utils.DataLoaders import get_loader
 
@@ -12,6 +14,7 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.utilities.model_summary import ModelSummary
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.loggers import CSVLogger
 
@@ -22,10 +25,13 @@ if __name__ == '__main__':
     parser.add_argument('--img-size', type=int, default=640, help='train, val image size (pixels)')
     parser.add_argument('--data', type=str, default="./data/fasterrcnn.yaml", help='data.yaml path')
     parser.add_argument('--weights', type=str, default=None, help='train from checkpoint')
+    parser.add_argument('--version', type=str, default='v2', choices=['v1', 'v2'], help='Version of MaskRCNN')
     parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
     parser.add_argument('--total_epochs', type=int, default=100, help='total_epochs')
     parser.add_argument('--num_workers', type=int, default=4, help='num_workers')
     parser.add_argument('--pin_memory', type=bool, default=False, help='pin_memory')
+    parser.add_argument('--logger_path', type=str, help='where you want to log your data')
+    parser.add_argument('--name', type=str, default=str, help='name of the model you want to save')
     parser.add_argument('--model', type=str, default='fasterrcnn', choices=['fasterrcnn', 'deeplab', 'maskrcnn'],
                         help='the model and task you want to perform')
 
@@ -35,11 +41,14 @@ if __name__ == '__main__':
     batch_size = args.batch_size  # Batch Size
     lr = args.lr  # Learning Rate
     weights = args.weights  # Check point to continue training
+    version = args.version  # version of MaskRCNN you want to use
     img_size = args.img_size  # Image size
     total_epochs = args.total_epochs  # number of epochs
     num_workers = args.num_workers
     pin_memory = args.pin_memory
     model = args.model
+    logger_path = args.logger_path
+    name = args.name
 
     with open(args.data, 'r') as f:
         data = yaml.safe_load(f)  # data from .yaml file
@@ -49,25 +58,49 @@ if __name__ == '__main__':
 
     ######################################## Datasets ########################################
 
-    # Training dataset
-    bdd_train_params = {
-        'cfg': cfg,
-        'stage': 'train',
-        'relative_path': relative_path,
-        'obj_cls': obj_cls
-    }
+    if model == 'fasterrcnn':
+        # Training dataset
+        bdd_train_params = {
+            'cfg': cfg,
+            'stage': 'train',
+            'relative_path': relative_path,
+            'obj_cls': obj_cls
+        }
 
-    bdd_train = BDDDetection(**bdd_train_params)
+        bdd_train = BDDDetection(**bdd_train_params)
 
-    # Validation dataset
-    bdd_val_params = {
-        'cfg': cfg,
-        'stage': 'val',
-        'relative_path': relative_path,
-        'obj_cls': obj_cls
-    }
+        # Validation dataset
+        bdd_val_params = {
+            'cfg': cfg,
+            'stage': 'val',
+            'relative_path': relative_path,
+            'obj_cls': obj_cls
+        }
 
-    bdd_val = BDDDetection(**bdd_val_params)
+        bdd_val = BDDDetection(**bdd_val_params)
+
+    elif model == 'maskrcnn':
+        # Training dataset
+        bdd_train_params = {
+            'cfg': cfg,
+            'stage': 'train',
+            'relative_path': relative_path,
+            'obj_cls': obj_cls,
+            'image_size': img_size
+        }
+
+        bdd_train = BDDInstanceSegmentation(**bdd_train_params)
+
+        # Validation dataset
+        bdd_val_params = {
+            'cfg': cfg,
+            'stage': 'val',
+            'relative_path': relative_path,
+            'obj_cls': obj_cls,
+            'image_size': img_size
+        }
+
+        bdd_val = BDDInstanceSegmentation(**bdd_val_params)
 
     print(f"Training Images: {len(bdd_train)}. Validation Images: {len(bdd_val)}.")
 
@@ -117,13 +150,21 @@ if __name__ == '__main__':
         }
         model = Faster_RCNN(**faster_rcnn_params)
 
-        ModelSummary(model)
 
     elif model == 'deeplab':
         pass
 
     elif model == 'maskrcnn':
-        pass
+        mask_rcnn_params = {
+            'cfg': cfg,
+            'num_classes': len(bdd_train.cls_to_idx),
+            'version': version,
+            'learning_rate': lr,
+            'weight_decay': 1e-3,
+            'pretrained': True,
+            'pretrained_backbone': True,
+        }
+        model = Mask_RCNN(**mask_rcnn_params)
 
     ModelSummary(model)  # print model summary
 
@@ -143,18 +184,19 @@ if __name__ == '__main__':
         'mode': 'min',
         'every_n_train_steps': 0,
         'every_n_epochs': 1,
-        'dirpath': '../checkpoints/detection/FasterRCNN/v1'
+        'dirpath': logger_path
     }
 
     checkpoint_callback = ModelCheckpoint(**checkpoint_params)  # Model check
 
-    logger = CSVLogger(save_dir="../logs/FasterRCNN/v3/logs", name="fasterrcnn_v3")
+    wandb_logger = WandbLogger(name=name, project='Master Thesis', log_model='all')
+    csv_logger = CSVLogger(save_dir=logger_path, name=name)
 
     if weights is not None:
         training_params = {
-            'resume_from_checkpoint': '../checkpoints/detection/FasterRCNN/v1/epoch=4-step=277110.ckpt',
+            'resume_from_checkpoint': weights,
             'profiler': "simple",
-            "logger": logger,
+            "logger": [wandb_logger, csv_logger],
             'accelerator': 'gpu',
             'devices': 1,
             'max_epochs': total_epochs,
@@ -164,13 +206,13 @@ if __name__ == '__main__':
             'model': model,
             'train_dataloaders': train_dataloader,
             'val_dataloaders': val_dataloader,
-            'ckpt_path': '../checkpoints/detection/FasterRCNN/v1/epoch=4-step=277110.ckpt',
+            'ckpt_path': weights,
         }
 
     else:
         training_params = {
             'profiler': "simple",
-            "logger": logger,
+            "logger": [csv_logger, wandb_logger],
             'accelerator': 'gpu',
             'devices': 1,
             'max_epochs': total_epochs,
@@ -180,7 +222,6 @@ if __name__ == '__main__':
             'model': model,
             'train_dataloaders': train_dataloader,
             'val_dataloaders': val_dataloader,
-            'ckpt_path': '../checkpoints/detection/FasterRCNN/v1/epoch=4-step=277110.ckpt',
         }
 
     trainer = Trainer(**training_params)

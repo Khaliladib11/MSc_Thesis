@@ -6,6 +6,7 @@ import torchvision
 from segmentation_models import get_deeplab
 
 from torch.utils.data import DataLoader
+import pytorch_lightning as pl
 
 
 class DeepLab(pl.LightningModule):
@@ -21,8 +22,6 @@ class DeepLab(pl.LightningModule):
                  weight_decay: float,
                  pretrained: bool,
                  pretrained_backbone: bool,
-                 train_loader: DataLoader,
-                 val_loader: DataLoader
                  ):
         """
         Constructor for the DeepLab class
@@ -33,8 +32,6 @@ class DeepLab(pl.LightningModule):
         :param weight_decay: decay for the regularization
         :param pretrained: bool value for pretrained network
         :param pretrained_backbone: bool value for pretrained backbone
-        :param train_loader: DataLoader for training
-        :param val_loader: DataLoader for testing
         """
         super(DeepLab, self).__init__()
 
@@ -46,8 +43,6 @@ class DeepLab(pl.LightningModule):
         self.weight_decay = weight_decay
         self.num_classes = num_classes
         self.backbone = backbone
-        self.train_loader = train_loader
-        self.val_loader = val_loader
 
         self.model = self.get_deeplab(self.num_classes, self.backbone, pretrained, pretrained_backbone)
 
@@ -58,12 +53,6 @@ class DeepLab(pl.LightningModule):
     def forward(self, x):
         self.model.eval()
         return self.model(x)
-
-    def train_dataloader(self):
-        return self.train_loader
-
-    def val_dataloader(self):
-        return self.val_loader
 
     def training_step(self, train_batch, batch_idx):
         images, targets = train_batch

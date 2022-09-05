@@ -197,10 +197,11 @@ class BDDInstanceSegmentation(BDD):
             mask = to_mask(mask_shape, poly2d)
             box = bbox_from_instance_mask(mask)
             label = self.cls_to_idx[label['category']]
-
-            masks.append(np.array(mask, dtype=np.uint8))
-            boxes.append(box)
-            labels.append(label)
+            if box is not None:
+                if box[0] != box[2] and box[1] != box[3]:
+                    masks.append(np.array(mask, dtype=np.uint8))
+                    boxes.append(box)
+                    labels.append(label)
 
         target['boxes'] = boxes
         target['labels'] = labels

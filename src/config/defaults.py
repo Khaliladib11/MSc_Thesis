@@ -54,5 +54,7 @@ _C.DRIVABLE_AREA.DEEPLAB_BACKBONE = ['resnet50', 'resnet101', 'mobilenet']
 
 # Instance Segmentation params
 _C.INSTANCE_SEGMENTATION = CN(new_allowed=True)
+_C.INSTANCE_SEGMENTATION.BACKBONE = ['resnet50']
+_C.INSTANCE_SEGMENTATION.VERSION = ['v1', 'v2']
 
 cfg = _C
