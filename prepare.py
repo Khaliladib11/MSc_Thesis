@@ -128,7 +128,7 @@ if __name__ == '__main__':
     # create annotation for validation
     yolo_val = create_yolo_annotation(bdd_val)
     # move the data to the specific path
-    move_files(yolo_train, images_val_path, labels_val_path)
+    move_files(yolo_val, images_val_path, labels_val_path)
     print(50 * '#')
     # create annotation for test
     yolo_test = create_yolo_annotation(bdd_test)
