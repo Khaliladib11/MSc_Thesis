@@ -71,7 +71,7 @@ def create_yolo_annotation(bdd):
         classes = item['classes']
         yolo_boxes = []
         for i, box in enumerate(boxes):
-            cls = classes[i] - 1
+            cls = classes[i]
             x, y, w, h = convert_pascal_to_yolo(box[0], box[1], box[2], box[3], width, height)
             # yolo_format = YOLO_Format(cls, x, y, w, h)
             yolo_boxes.append([cls, x, y, w, h])
@@ -109,7 +109,7 @@ def move_files(yolo_deque, images_folder_destination, labels_folder_destination)
 
 
 def create_annotation_file(yolo_item, labels_folder_destination):
-    text_file_name = yolo_item['image_name'].replace('.jpg', '.txt')
+    text_file_name = yolo_item['image_name'].replace('.jpg', '.txt').split('/')[-1]
     file_path = os.path.join(labels_folder_destination, text_file_name)
     file = open(file_path, 'a')
     for line in yolo_item['yolo_boxes']:

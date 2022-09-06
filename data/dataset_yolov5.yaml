@@ -3,7 +3,7 @@ val:  ../dataset/images/val/
 test: ../dataset/images/test/
 
 # number of classes
-nc: 7
+nc: 5
 
 # class names
-names: ['pedestrian', 'car', 'rider', 'bicycle', 'motorcycle', 'truck', 'bus']
+names: ['pedestrian', 'car', 'motorcycle', 'traffic light', 'traffic sign']

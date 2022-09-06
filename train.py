@@ -129,7 +129,9 @@ if __name__ == '__main__':
 
         bdd_val = BDDInstanceSegmentation(**bdd_val_params)
 
+    print(50*'#')
     print(f"Training Images: {len(bdd_train)}. Validation Images: {len(bdd_val)}.")
+    print(50*'#')
 
     ######################################## DataLoaders ########################################
 
@@ -162,7 +164,9 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         device = torch.device('cuda')
 
+    print(50 * '#')
     print(f"We are using {device}")
+    print(50 * '#')
 
     # check model
     if model == 'fasterrcnn':
@@ -202,7 +206,9 @@ if __name__ == '__main__':
         }
         model = Mask_RCNN(**mask_rcnn_params)
 
+    print(50 * '#')
     ModelSummary(model)  # print model summary
+    print(50 * '#')
 
     ######################################## Training ########################################
 

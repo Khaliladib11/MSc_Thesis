@@ -27,7 +27,8 @@ class BDDDetection(BDD):
     def __init__(self,
                  cfg,
                  stage,
-                 obj_cls=['__bgr__', 'pedestrian', 'car', 'rider', 'bicycle', 'motorcycle', 'truck', 'bus'],
+                 obj_cls=['__bgr__', 'pedestrian', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
+                          'traffic light', 'traffic sign'],
                  db_path=None,
                  relative_path='..',
                  image_size=400,
@@ -54,35 +55,46 @@ class BDDDetection(BDD):
                 self.db = json.load(f)
         else:
             # or create it and split the data
-            _db = self.__create_db()
-            self.db = self.split_data(_db)
+            self.db = self.__create_db()
+            # self.db = self.split_data(_db)
 
-    def __filter_data(self, labels):
-        filered_labels = []
-        for label in labels:
-            filtered_label = {}
-            filtered_label['name'] = label['name']
-            if 'labels' in label.keys():
-                objects = label['labels']
-                num_cars = 0
-                filtered_list = []
-                for obj in objects:
-                    category = obj['category']
-                    if category in self.obj_cls:
-                        filtered_list.append(obj)
-                        if category == 'car':
-                            num_cars += 1
+    def create_idx(self):
+        cls_to_idx = {
+            '__bgr__': 0,
+            'pedestrian': 1,
+            'car': 2,
+            'bus': 2,
+            'truck': 2,
+            'traffic light': 3,
+            'traffic sign': 4,
+            'bicycle': 5,
+            'motorcycle': 5,
+        }
+        idx_to_cls = {
+            0: '__bgr__',
+            1: 'pedestrian',
+            2: 'car',
+            3: 'traffic light',
+            4: 'traffic sign',
+            5: 'motorcycle'
+        }
 
-                if num_cars < 10:
-                    filtered_label['labels'] = filtered_list
-                    filered_labels.append(filtered_label)
+        return cls_to_idx, idx_to_cls
 
-        return filered_labels
+    def split_data(self, labels, train_size=80):
+        to_idx = (train_size * len(labels)) // 100
+        if self.stage == 'train':
+            train_db = labels[:to_idx]
+            return train_db
+        elif self.stage == 'val':
+            val_db = labels[to_idx:]
+            return val_db
+        else:
+            return labels
 
-    def __create_db(self, format='xyxy'):
+    def __create_db(self):
         """
         private method to create the database for the class
-        :param format: the format of bounding boxes (xyxy or xywh)
         :return: deque object that holds the database
         """
         detection_db = deque()
@@ -95,7 +107,14 @@ class BDDDetection(BDD):
 
         random.shuffle(labels)
 
-        labels = self.__filter_data(labels)
+        # labels = self.__filter_data(labels)
+
+        if self.stage == 'test':
+            labels = random.sample(labels, 2500)
+        else:
+            labels = random.sample(labels, 25000)
+
+        labels = self.split_data(labels)
 
         # loop through the labels
         for item in tqdm(labels):
@@ -123,8 +142,7 @@ class BDDDetection(BDD):
                         y2 = obj['box2d']['y2']
 
                         # bbox = [x1, y1, x2 - x1, y2 - y1]  # bbox of form: (x, y, w, h) MSCOCO format
-                        if format == 'xyxy':
-                            bbox = [x1, y1, x2, y2]
+                        bbox = [x1, y1, x2, y2]
 
                         cls = self.cls_to_idx[category]
 
@@ -254,7 +272,6 @@ class BDDDetection(BDD):
         bboxes = self.db[idx]['bboxes']
         image, boxes, labels = self.data_augmentation(np.array(image), bboxes, labels)
         image = self.image_transform(image)
-        print(boxes)
         targets = {
             'labels': torch.tensor(labels, dtype=torch.int64),
             'boxes': torch.tensor(boxes, dtype=torch.float)

@@ -51,8 +51,6 @@ class Faster_RCNN(pl.LightningModule):
         loss_mean = torch.mean(epoch_losses)
         self.log('training_loss', loss_mean)
 
-        return {'train_loss': loss_mean}
-
     def validation_step(self, val_batch, batch_idx):
         self.model.train()
         images, targets = val_batch
@@ -69,7 +67,6 @@ class Faster_RCNN(pl.LightningModule):
         # epoch_losses = torch.stack(training_step_outputs)
         loss_mean = torch.mean(epoch_losses)
         self.log('val_loss', loss_mean)
-        return {'val_loss': loss_mean}
 
     def predict_step(self, batch):
         self.model.eval()

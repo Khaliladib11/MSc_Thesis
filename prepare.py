@@ -54,10 +54,11 @@ if __name__ == '__main__':
     }
 
     bdd_test = BDDDetection(**bdd_test_params)
-
+    print(50*'#')
     print(
         f"We have {len(bdd_train)} training images, {len(bdd_val)} validation images and {len(bdd_test)} test images.")
 
+    print(50 * '#')
     ######################################## Prepare Data ########################################
 
     """
@@ -117,17 +118,20 @@ if __name__ == '__main__':
         images_test_path = os.path.join(dataset_path, 'test', 'images')
         labels_test_path = os.path.join(dataset_path, 'test', 'labels')
 
+    print(50 * '#')
     # create annotation for training
     yolo_train = create_yolo_annotation(bdd_train)
     # move the data to the specific path
     move_files(yolo_train, images_training_path, labels_training_path)
+    print(50 * '#')
 
     # create annotation for validation
     yolo_val = create_yolo_annotation(bdd_val)
     # move the data to the specific path
     move_files(yolo_train, images_val_path, labels_val_path)
-
+    print(50 * '#')
     # create annotation for test
     yolo_test = create_yolo_annotation(bdd_test)
     # move the data to the specific path
     move_files(yolo_test, images_test_path, labels_test_path)
+    print(50 * '#')
