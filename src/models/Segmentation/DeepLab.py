@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 import torchvision
-from segmentation_models import get_deeplab
+from .segmentation_models import get_deeplab
 
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
@@ -44,7 +44,7 @@ class DeepLab(pl.LightningModule):
         self.num_classes = num_classes
         self.backbone = backbone
 
-        self.model = self.get_deeplab(self.num_classes, self.backbone, pretrained, pretrained_backbone)
+        self.model = get_deeplab(self.num_classes, self.backbone, pretrained, pretrained_backbone)
 
         self.criterion = nn.CrossEntropyLoss()
 

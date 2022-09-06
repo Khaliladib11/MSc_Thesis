@@ -118,6 +118,7 @@ For more information follow this [Tutorials](https://github.com/ultralytics/yolo
 
 #### Yolov7
 Almost the same as [Yolov5](####Yolov5)
+
 1- Create new virtual env using `virtualenv` or `conda` then activate it.
 2- Clone **Yolov7** repository outside this project:
 ```bash

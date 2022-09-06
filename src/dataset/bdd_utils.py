@@ -1,6 +1,7 @@
 # Import Libraries
 import numpy as np
 import random
+import json
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import torch
@@ -8,6 +9,9 @@ from torchvision.io import read_image
 from torchvision.ops import masks_to_boxes
 
 
+###############################################################################################################
+# DISPLAY
+###############################################################################################################
 def to_mask(mask_shape, poly2d):
     """
     function to convert 2D polygon to 2D mask

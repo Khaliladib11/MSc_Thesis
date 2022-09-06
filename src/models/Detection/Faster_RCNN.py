@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 import torch
-from detection_models import get_fasterrcnn
+from .detection_models import get_fasterrcnn
 import pytorch_lightning as pl
 
 
@@ -28,7 +28,7 @@ class Faster_RCNN(pl.LightningModule):
         self.num_classes = num_classes
         self.save_hyperparameters()
 
-        self.model = get_fasterrcnn(self.num_classes, self.backbone, pretrained, pretrained_backbone)
+        self.model = get_fasterrcnn(self.num_classes, backbone, pretrained, pretrained_backbone)
 
     def forward(self, x, *args, **kwargs):
         return self.model(x)

@@ -4,7 +4,7 @@ import torch.nn as nn
 import torchvision
 import pytorch_lightning as pl
 
-from segmentation_models import get_maskrcnn
+from .segmentation_models import get_maskrcnn
 
 
 class Mask_RCNN(pl.LightningModule):

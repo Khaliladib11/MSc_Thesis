@@ -4,8 +4,10 @@ import argparse
 
 from src.models.Detection.Faster_RCNN import Faster_RCNN
 from src.models.Segmentation.MaskRCNN import Mask_RCNN
+from src.models.Segmentation.DeepLab import DeepLab
 from src.dataset.bdd_detetcion import BDDDetection
 from src.dataset.bdd_instance_segmentation import BDDInstanceSegmentation
+from src.dataset.bdd_drivable_segmentation import BDDDrivableSegmentation
 from src.config.defaults import cfg
 from src.utils.DataLoaders import get_loader
 
@@ -25,6 +27,7 @@ if __name__ == '__main__':
     parser.add_argument('--img-size', type=int, default=640, help='train, val image size (pixels)')
     parser.add_argument('--data', type=str, default="./data/fasterrcnn.yaml", help='data.yaml path')
     parser.add_argument('--weights', type=str, default=None, help='train from checkpoint')
+    parser.add_argument('--backbone', type=str, default='resnet50', help='choose the backbone you want to use - default: resnet50')
     parser.add_argument('--version', type=str, default='v2', choices=['v1', 'v2'], help='Version of MaskRCNN')
     parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
     parser.add_argument('--total_epochs', type=int, default=100, help='total_epochs')
@@ -41,6 +44,7 @@ if __name__ == '__main__':
     batch_size = args.batch_size  # Batch Size
     lr = args.lr  # Learning Rate
     weights = args.weights  # Check point to continue training
+    backbone = args.backbone  # Check point to continue training
     version = args.version  # version of MaskRCNN you want to use
     img_size = args.img_size  # Image size
     total_epochs = args.total_epochs  # number of epochs
@@ -78,6 +82,29 @@ if __name__ == '__main__':
         }
 
         bdd_val = BDDDetection(**bdd_val_params)
+
+    elif model == 'deeplab':
+        # Training dataset
+        bdd_train_params = {
+            'cfg': cfg,
+            'stage': 'train',
+            'relative_path': relative_path,
+            'obj_cls': obj_cls,
+            'image_size': img_size
+        }
+
+        bdd_train = BDDDrivableSegmentation(**bdd_train_params)
+
+        # Validation dataset
+        bdd_val_params = {
+            'cfg': cfg,
+            'stage': 'val',
+            'relative_path': relative_path,
+            'obj_cls': obj_cls,
+            'image_size': img_size
+        }
+
+        bdd_val = BDDDrivableSegmentation(**bdd_val_params)
 
     elif model == 'maskrcnn':
         # Training dataset
@@ -142,7 +169,7 @@ if __name__ == '__main__':
         faster_rcnn_params = {
             'cfg': cfg,
             'num_classes': len(bdd_train.cls_to_idx),
-            'backbone': 'resnet50',
+            'backbone': backbone,
             'learning_rate': lr,
             'weight_decay': 1e-3,
             'pretrained': True,
@@ -152,7 +179,16 @@ if __name__ == '__main__':
 
 
     elif model == 'deeplab':
-        pass
+        deeplab_params = {
+            'cfg': cfg,
+            'num_classes': len(bdd_train.cls_to_idx),
+            'backbone': backbone,
+            'learning_rate': lr,
+            'weight_decay': 1e-3,
+            'pretrained': True,
+            'pretrained_backbone': True,
+        }
+        model = DeepLab(**deeplab_params)
 
     elif model == 'maskrcnn':
         mask_rcnn_params = {

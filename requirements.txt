@@ -3,6 +3,7 @@
 
 torch
 torchvision
+pytorch-lightning
 numpy
 pillow
 tqdm

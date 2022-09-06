@@ -71,14 +71,12 @@ class BDD(data.Dataset):
         idx = 0
 
         for obj in self.obj_cls:
-
+            cls_to_idx[self.obj_cls[idx]] = idx
+            idx_to_cls[idx] = self.obj_cls[idx]
+            idx += 1
             # if obj is a traffic light, add the class with the color except the NA
+            """
             if obj == 'traffic light':
-                """
-                cls_to_idx['tl_NA'] = idx
-                idx_to_cls[idx] = 'tl_NA'
-                idx += 1
-                """
 
                 cls_to_idx['tl_G'] = idx
                 idx_to_cls[idx] = 'tl_G'
@@ -96,6 +94,8 @@ class BDD(data.Dataset):
                 cls_to_idx[self.obj_cls[idx]] = idx
                 idx_to_cls[idx] = self.obj_cls[idx]
                 idx += 1
+            """
+
 
         return cls_to_idx, idx_to_cls
 

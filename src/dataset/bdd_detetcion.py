@@ -57,6 +57,28 @@ class BDDDetection(BDD):
             _db = self.__create_db()
             self.db = self.split_data(_db)
 
+    def __filter_data(self, labels):
+        filered_labels = []
+        for label in labels:
+            filtered_label = {}
+            filtered_label['name'] = label['name']
+            if 'labels' in label.keys():
+                objects = label['labels']
+                num_cars = 0
+                filtered_list = []
+                for obj in objects:
+                    category = obj['category']
+                    if category in self.obj_cls:
+                        filtered_list.append(obj)
+                        if category == 'car':
+                            num_cars += 1
+
+                if num_cars < 10:
+                    filtered_label['labels'] = filtered_list
+                    filered_labels.append(filtered_label)
+
+        return filered_labels
+
     def __create_db(self, format='xyxy'):
         """
         private method to create the database for the class
@@ -72,6 +94,8 @@ class BDDDetection(BDD):
             labels = json.load(labels_file)
 
         random.shuffle(labels)
+
+        labels = self.__filter_data(labels)
 
         # loop through the labels
         for item in tqdm(labels):
@@ -93,6 +117,21 @@ class BDDDetection(BDD):
 
                     # if the category is in the classes we want to predict
                     if category in self.obj_cls:
+                        x1 = obj['box2d']['x1']
+                        y1 = obj['box2d']['y1']
+                        x2 = obj['box2d']['x2']
+                        y2 = obj['box2d']['y2']
+
+                        # bbox = [x1, y1, x2 - x1, y2 - y1]  # bbox of form: (x, y, w, h) MSCOCO format
+                        if format == 'xyxy':
+                            bbox = [x1, y1, x2, y2]
+
+                        cls = self.cls_to_idx[category]
+
+                        bboxes.append(bbox)
+                        classes.append(cls)
+
+                        """
                         # if the category is traffic light load it with the color
                         if category == 'traffic light':
                             # print(obj['attributes'])
@@ -129,7 +168,7 @@ class BDDDetection(BDD):
 
                             bboxes.append(bbox)
                             classes.append(cls)
-
+                        """
                 # if we have one and more objects in the image append the image path, bboxes and classes to the db
                 if len(classes) > 0:
                     detection_db.append({
@@ -215,6 +254,7 @@ class BDDDetection(BDD):
         bboxes = self.db[idx]['bboxes']
         image, boxes, labels = self.data_augmentation(np.array(image), bboxes, labels)
         image = self.image_transform(image)
+        print(boxes)
         targets = {
             'labels': torch.tensor(labels, dtype=torch.int64),
             'boxes': torch.tensor(boxes, dtype=torch.float)
