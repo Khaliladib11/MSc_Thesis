@@ -107,12 +107,12 @@ mkdir train test val
 6- Prepare the data to be aligned with the YOLO format:
 ```bash
 cd ../MSc_Thesis
-python prepare.py --yolo_version yolov5 --dataset_path '../yolov5/dataset'
+python prepare.py --yolo_version yolov5 --dataset_path '../yolov5/dataset' --data './data/yolo.yaml'
 ```
 5- train the model:
 ```bash
 cd ../yolov5
-python train.py --img 640 --batch 1 --epochs 30 --data './data/dataset_yolov5.yaml' --weights yolov5m.pt --name yolo_bdd
+python train.py --img 640 --batch 32 --epochs 100 --data './data/dataset.yaml' --weights yolov5s.pt --optimizer Adam --name yolo5s_bdd
 ```
 For more information follow this [Tutorials](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data).
 
@@ -147,12 +147,13 @@ mkdir images labels
 6- Prepare the data to be aligned with the YOLO format:
 ```bash
 cd ../MSc_Thesis
-python prepare.py --yolo_version yolov7 --dataset_path '../yolov7/dataset'
+python prepare.py --yolo_version yolov7 --dataset_path '../yolov7/dataset' --data './data/yolo.yaml'
 ```
 5- train the model:
 ```bash
 cd ../yolov7
-python train.py --img 640 --batch 1 --epochs 30 --data './data/dataset_yolov7.yaml' --weights yolov5m.pt --name yolo_bdd
+python python train.py --device 0 --batch-size 32 --data data/dataset.yaml --img 640 640  --epochs 100 --cfg cfg/training/yolov7-custom.yaml --weights 'yolov7_training.pt' --adam --name yolov7_bdd --hyp data/hyp.scratch.custom.yaml
+
 ```
 For more information follow this [Tutorials](https://blog.paperspace.com/yolov7/).
 

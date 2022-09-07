@@ -18,6 +18,30 @@ from .bdd import BDD
 # Define color map to be used when displaying the images with bounding boxes
 COLOR_MAP = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue']
 
+"""
+CLS_TO_IDX = {
+    '__bgr__': 0,
+    'pedestrian': 1,
+    'car': 2,
+    'bus': 2,
+    'truck': 2,
+    'traffic light': 3,
+    'traffic sign': 4,
+    'bicycle': 5,
+    'motorcycle': 5,
+}
+
+IDX_TO_CLS = {
+    0: '__bgr__',
+    1: 'pedestrian',
+    2: 'car',
+    3: 'traffic light',
+    4: 'traffic sign',
+    5: 'motorcycle'
+}
+"""
+
+
 
 class BDDDetection(BDD):
     """
@@ -27,6 +51,8 @@ class BDDDetection(BDD):
     def __init__(self,
                  cfg,
                  stage,
+                 idx_to_cls,
+                 cls_to_idx,
                  obj_cls=['__bgr__', 'pedestrian', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
                           'traffic light', 'traffic sign'],
                  db_path=None,
@@ -49,6 +75,9 @@ class BDDDetection(BDD):
         assert all(cls in cfg.DATASET.DETECTION_CLASSES for cls in
                    obj_cls), f"Please choose classes from the following: {cfg.DATASET.DETECTION_CLASSES}"
 
+        self.cls_to_idx = cls_to_idx
+        self.idx_to_cls = idx_to_cls
+
         # load pre created db
         if db_path:
             with open(db_path, 'r') as f:
@@ -58,28 +87,6 @@ class BDDDetection(BDD):
             self.db = self.__create_db()
             # self.db = self.split_data(_db)
 
-    def create_idx(self):
-        cls_to_idx = {
-            '__bgr__': 0,
-            'pedestrian': 1,
-            'car': 2,
-            'bus': 2,
-            'truck': 2,
-            'traffic light': 3,
-            'traffic sign': 4,
-            'bicycle': 5,
-            'motorcycle': 5,
-        }
-        idx_to_cls = {
-            0: '__bgr__',
-            1: 'pedestrian',
-            2: 'car',
-            3: 'traffic light',
-            4: 'traffic sign',
-            5: 'motorcycle'
-        }
-
-        return cls_to_idx, idx_to_cls
 
     def split_data(self, labels, train_size=80):
         to_idx = (train_size * len(labels)) // 100
@@ -112,7 +119,7 @@ class BDDDetection(BDD):
         if self.stage == 'test':
             labels = random.sample(labels, 2500)
         else:
-            labels = random.sample(labels, 25000)
+            labels = random.sample(labels, 40000)
 
         labels = self.split_data(labels)
 
@@ -143,6 +150,8 @@ class BDDDetection(BDD):
 
                         # bbox = [x1, y1, x2 - x1, y2 - y1]  # bbox of form: (x, y, w, h) MSCOCO format
                         bbox = [x1, y1, x2, y2]
+
+
 
                         cls = self.cls_to_idx[category]
 

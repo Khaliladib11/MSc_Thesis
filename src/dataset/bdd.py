@@ -60,7 +60,7 @@ class BDD(data.Dataset):
         self.db = deque()  # deque object to hold the info
 
         # class to index and index to class mapping
-        self.cls_to_idx, self.idx_to_cls = self.create_idx()
+        # self.cls_to_idx, self.idx_to_cls = self.create_idx()
 
         random.seed(seed)  # Fixed seeds
 

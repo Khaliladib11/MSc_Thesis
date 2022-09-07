@@ -53,6 +53,8 @@ class BDDInstanceSegmentation(BDD):
         assert all(cls in cfg.DATASET.INSTANCE_CLASSES for cls in
                    obj_cls), f"Please choose classes from the following: {cfg.DATASET.INSTANCE_CLASSES}"
 
+        self.cls_to_idx, self.idx_to_cls = self.create_idx()
+
         if self.stage == 'train':
             self.images_root = self.root / Path(cfg.DATASET.IMAGE_10K_ROOT + '/train')  # images root
             self.instance_segmentation_root = self.root / Path(

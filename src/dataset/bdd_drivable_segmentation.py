@@ -42,6 +42,8 @@ class BDDDrivableSegmentation(BDD):
                                                       image_size=image_size,
                                                       transform=transform)
 
+        self.cls_to_idx, self.idx_to_cls = self.create_idx()
+
         _db = self.__create_db()
         self.db = self.split_data(_db)
 
