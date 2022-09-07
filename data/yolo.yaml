@@ -1,21 +1,2 @@
-classes: ['__bgr__', 'pedestrian', 'car', 'bicycle', 'motorcycle', 'truck', 'bus', 'traffic light', 'traffic sign']
+classes: ['pedestrian', 'car', 'traffic light', 'traffic sign']
 relative_path: '..'
-
-idx_to_cls: {
-  0: 'pedestrian',
-  1: 'car',
-  2: 'traffic light',
-  3: 'traffic sign',
-  4: 'motorcycle'
-}
-
-cls_to_idx: {
-    'pedestrian': 0,
-    'car': 1,
-    'bus': 1,
-    'truck': 1,
-    'traffic light': 2,
-    'traffic sign': 3,
-    'bicycle': 4,
-    'motorcycle': 4,
-}

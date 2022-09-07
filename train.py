@@ -59,9 +59,6 @@ if __name__ == '__main__':
 
     obj_cls = data['classes']  # the classes we want to work one
     relative_path = data['relative_path']  # relative path to the dataset
-    idx_to_cls = data['idx_to_cls']
-    cls_to_idx = data['cls_to_idx']
-
     ######################################## Datasets ########################################
 
     if model == 'fasterrcnn':
@@ -71,8 +68,6 @@ if __name__ == '__main__':
             'stage': 'train',
             'relative_path': relative_path,
             'obj_cls': obj_cls,
-            'idx_to_cls': idx_to_cls,
-            'cls_to_idx': cls_to_idx
         }
 
         bdd_train = BDDDetection(**bdd_train_params)
@@ -83,8 +78,6 @@ if __name__ == '__main__':
             'stage': 'val',
             'relative_path': relative_path,
             'obj_cls': obj_cls,
-            'idx_to_cls': idx_to_cls,
-            'cls_to_idx': cls_to_idx
         }
 
         bdd_val = BDDDetection(**bdd_val_params)

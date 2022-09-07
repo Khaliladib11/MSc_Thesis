@@ -51,10 +51,7 @@ class BDDDetection(BDD):
     def __init__(self,
                  cfg,
                  stage,
-                 idx_to_cls,
-                 cls_to_idx,
-                 obj_cls=['__bgr__', 'pedestrian', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
-                          'traffic light', 'traffic sign'],
+                 obj_cls=['__bgr__', 'pedestrian', 'car', 'traffic light', 'traffic sign'],
                  db_path=None,
                  relative_path='..',
                  image_size=400,
@@ -74,9 +71,6 @@ class BDDDetection(BDD):
         # check if the classes are in the DETECTION_CLASSES
         assert all(cls in cfg.DATASET.DETECTION_CLASSES for cls in
                    obj_cls), f"Please choose classes from the following: {cfg.DATASET.DETECTION_CLASSES}"
-
-        self.cls_to_idx = cls_to_idx
-        self.idx_to_cls = idx_to_cls
 
         # load pre created db
         if db_path:
