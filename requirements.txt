@@ -1,13 +1,14 @@
 # Requirements file
 # Usage: pip install -r requirements.txt
 
-torch
-torchvision
-pytorch-lightning
-numpy
-pillow
-tqdm
-matplotlib
-albumentations
-opencv-python
-yacs
+torch==1.12.0
+torchvision==0.13
+pytorch-lightning==1.7.0
+numpy==1.21.6
+pillow==9.2.0
+tqdm==4.64.0
+matplotlib==3.5.1
+albumentations==1.2.1
+opencv-python==4.5.5
+yacs==0.1.8
+wandb==0.13.1

@@ -74,7 +74,7 @@ pip install -R requirements.txt
 #### Faster RCNN
 To train F**aster RCNN** model run the following command:
 ```bash
-python train.py --model fasterrcnn  --data './data/fasterrcnn.yaml' --batch-size 1 --img-size 640 --total_epochs 20
+python train.py --model fasterrcnn  --data './data/fasterrcnn.yaml' --batch-size 32 --img-size 640 --total_epochs 20 --logger_path 'logs' --checkpoint_path 'checkpoints' --project 'Faster RCNN' --name 'version0' --num_workers 4 --pin_memory True 
 ```
 Where `model` to specify that we want **Faster RCNN** model, `batch-size` for batch size, `img-size` for resizing the images and finally `--total_epochs` for the epochs.
 

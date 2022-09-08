@@ -17,50 +17,10 @@ from pytorch_lightning.utilities.model_summary import ModelSummary
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.loggers import CSVLogger
 
-if __name__ == '__main__':
-    # Define the parser
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs')
-    parser.add_argument('--img-size', type=int, default=640, help='train, val image size (pixels)')
-    parser.add_argument('--data', type=str, default="./data/fasterrcnn.yaml", help='data.yaml path')
-    parser.add_argument('--weights', type=str, default=None, help='train from checkpoint')
-    parser.add_argument('--backbone', type=str, default='resnet50', help='choose the backbone you want to use - default: resnet50')
-    parser.add_argument('--version', type=str, default='v2', choices=['v1', 'v2'], help='Version of MaskRCNN')
-    parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
-    parser.add_argument('--total_epochs', type=int, default=100, help='total_epochs')
-    parser.add_argument('--num_workers', type=int, default=4, help='num_workers')
-    parser.add_argument('--pin_memory', type=bool, default=False, help='pin_memory')
-    parser.add_argument('--logger_path', type=str, help='where you want to log your data')
-    parser.add_argument('--name', type=str, default=str, help='name of the model you want to save')
-    parser.add_argument('--model', type=str, default='fasterrcnn', choices=['fasterrcnn', 'deeplab', 'maskrcnn'],
-                        help='the model and task you want to perform')
 
-    # Fetch the params from the parser
-    args = parser.parse_args()
-
-    batch_size = args.batch_size  # Batch Size
-    lr = args.lr  # Learning Rate
-    weights = args.weights  # Check point to continue training
-    backbone = args.backbone  # Check point to continue training
-    version = args.version  # version of MaskRCNN you want to use
-    img_size = args.img_size  # Image size
-    total_epochs = args.total_epochs  # number of epochs
-    num_workers = args.num_workers
-    pin_memory = args.pin_memory
-    model = args.model
-    logger_path = args.logger_path
-    name = args.name
-
-    with open(args.data, 'r') as f:
-        data = yaml.safe_load(f)  # data from .yaml file
-
-    obj_cls = data['classes']  # the classes we want to work one
-    relative_path = data['relative_path']  # relative path to the dataset
-    ######################################## Datasets ########################################
-
+def get_datasets(model, relative_path, obj_cls):
     if model == 'fasterrcnn':
         # Training dataset
         bdd_train_params = {
@@ -128,13 +88,10 @@ if __name__ == '__main__':
 
         bdd_val = BDDInstanceSegmentation(**bdd_val_params)
 
-    print(50*'#')
-    print(f"Training Images: {len(bdd_train)}. Validation Images: {len(bdd_val)}.")
-    print(50*'#')
+    return bdd_train, bdd_val
 
-    ######################################## DataLoaders ########################################
 
-    # training dataloader
+def get_loaders(bdd_train, batch_size, pin_memory, num_workers):
     train_dataloader_args = {
         'dataset': bdd_train,
         'batch_size': batch_size,
@@ -156,6 +113,108 @@ if __name__ == '__main__':
     }
     val_dataloader = get_loader(**val_dataloader_args)
 
+    return train_dataloader, val_dataloader
+
+
+def get_model(model_name, num_classes, backbone, lr, version):
+    if model_name == 'fasterrcnn':
+        faster_rcnn_params = {
+            'cfg': cfg,
+            'num_classes': num_classes,
+            'backbone': backbone,
+            'learning_rate': lr,
+            'weight_decay': 1e-3,
+            'pretrained': True,
+            'pretrained_backbone': True,
+        }
+        model = Faster_RCNN(**faster_rcnn_params)
+
+
+    elif model_name == 'deeplab':
+        deeplab_params = {
+            'cfg': cfg,
+            'num_classes': num_classes,
+            'backbone': backbone,
+            'learning_rate': lr,
+            'weight_decay': 1e-3,
+            'pretrained': True,
+            'pretrained_backbone': True,
+        }
+        model = DeepLab(**deeplab_params)
+
+    elif model_name == 'maskrcnn':
+        mask_rcnn_params = {
+            'cfg': cfg,
+            'num_classes': num_classes,
+            'version': version,
+            'learning_rate': lr,
+            'weight_decay': 1e-3,
+            'pretrained': True,
+            'pretrained_backbone': True,
+        }
+        model = Mask_RCNN(**mask_rcnn_params)
+
+    return model
+
+
+if __name__ == '__main__':
+    # Define the parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs')
+    parser.add_argument('--img-size', type=int, default=640, help='train, val image size (pixels)')
+    parser.add_argument('--data', type=str, default="./data/fasterrcnn.yaml", help='data.yaml path')
+    parser.add_argument('--weights', type=str, default=None, help='train from checkpoint')
+    parser.add_argument('--backbone', type=str, default='resnet50',
+                        help='choose the backbone you want to use - default: resnet50')
+    parser.add_argument('--version', type=str, default='v2', choices=['v1', 'v2'], help='Version of MaskRCNN')
+    parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
+    parser.add_argument('--total_epochs', type=int, default=100, help='total_epochs')
+    parser.add_argument('--num_workers', type=int, default=4, help='num_workers')
+    parser.add_argument('--pin_memory', type=bool, default=False, help='pin_memory')
+    parser.add_argument('--logger_path', type=str, help='where you want to log your data')
+    parser.add_argument('--checkpoint_path', type=str, default='./checkpoints',
+                        help="Path where you want to checkpoint.")
+    parser.add_argument('--name', type=str, default='version1', help='name of the model you want to save')
+    parser.add_argument('--project', type=str, default='Master Thesis', help='name of the Project to save in wandb')
+    parser.add_argument('--model', type=str, default='fasterrcnn', choices=['fasterrcnn', 'deeplab', 'maskrcnn'],
+                        help='the model and task you want to perform')
+
+    # Fetch the params from the parser
+    args = parser.parse_args()
+
+    batch_size = args.batch_size  # Batch Size
+    img_size = args.img_size  # Image size
+    lr = args.lr  # Learning Rate
+    weights = args.weights  # Check point to continue training
+    backbone = args.backbone  # Check point to continue training
+    version = args.version  # version of MaskRCNN you want to use
+
+    total_epochs = args.total_epochs  # number of epochs
+    num_workers = args.num_workers  # number of workers
+    pin_memory = args.pin_memory  # pin memory
+    model_name = args.model  # the name of the model: fastercnn, maskrcnn, deeplab
+    logger_path = args.logger_path  # where you want to save the logs
+    checkpoint_path = args.checkpoint_path  # path to checkpoints
+    name = args.name  # name of the projects (version)
+    project = args.project  # name of the projects
+
+    with open(args.data, 'r') as f:
+        data = yaml.safe_load(f)  # data from .yaml file
+
+    obj_cls = data['classes']  # the classes we want to work one
+    relative_path = data['relative_path']  # relative path to the dataset
+    ######################################## Datasets ########################################
+
+    bdd_train, bdd_val = get_datasets(model_name, relative_path, obj_cls)
+
+    print(50 * '#')
+    print(f"Training Images: {len(bdd_train)}. Validation Images: {len(bdd_val)}.")
+    print(50 * '#')
+
+    ######################################## DataLoaders ########################################
+
+    train_dataloader, val_dataloader = get_loaders(bdd_train, batch_size, pin_memory, num_workers)
+
     ######################################## Model ########################################
 
     # check device
@@ -168,42 +227,8 @@ if __name__ == '__main__':
     print(50 * '#')
 
     # check model
-    if model == 'fasterrcnn':
-        faster_rcnn_params = {
-            'cfg': cfg,
-            'num_classes': len(bdd_train.cls_to_idx),
-            'backbone': backbone,
-            'learning_rate': lr,
-            'weight_decay': 1e-3,
-            'pretrained': True,
-            'pretrained_backbone': True,
-        }
-        model = Faster_RCNN(**faster_rcnn_params)
 
-
-    elif model == 'deeplab':
-        deeplab_params = {
-            'cfg': cfg,
-            'num_classes': len(bdd_train.cls_to_idx),
-            'backbone': backbone,
-            'learning_rate': lr,
-            'weight_decay': 1e-3,
-            'pretrained': True,
-            'pretrained_backbone': True,
-        }
-        model = DeepLab(**deeplab_params)
-
-    elif model == 'maskrcnn':
-        mask_rcnn_params = {
-            'cfg': cfg,
-            'num_classes': len(bdd_train.cls_to_idx),
-            'version': version,
-            'learning_rate': lr,
-            'weight_decay': 1e-3,
-            'pretrained': True,
-            'pretrained_backbone': True,
-        }
-        model = Mask_RCNN(**mask_rcnn_params)
+    model = get_model(model_name, len(bdd_train.cls_to_idx), backbone, lr, version)
 
     print(50 * '#')
     ModelSummary(model)  # print model summary
@@ -211,6 +236,7 @@ if __name__ == '__main__':
 
     ######################################## Training ########################################
 
+    # Early Stopping
     early_stop_params = {
         'monitor': "val_loss",
         'patience': 5,
@@ -220,17 +246,19 @@ if __name__ == '__main__':
 
     early_stop_callback = EarlyStopping(**early_stop_params)  # Early Stopping to avoid overfitting
 
+    # Checkpoint
     checkpoint_params = {
         'monitor': "val_loss",
         'mode': 'min',
         'every_n_train_steps': 0,
         'every_n_epochs': 1,
-        'dirpath': logger_path
+        'dirpath': checkpoint_path
     }
 
     checkpoint_callback = ModelCheckpoint(**checkpoint_params)  # Model check
 
-    wandb_logger = WandbLogger(name=name, project='Master Thesis', log_model='all')
+    # Loggers
+    wandb_logger = WandbLogger(name=name, project=project, log_model='all')
     csv_logger = CSVLogger(save_dir=logger_path, name=name)
 
     if weights is not None:
