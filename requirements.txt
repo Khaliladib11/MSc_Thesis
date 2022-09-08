@@ -8,6 +8,7 @@ numpy==1.21.6
 pillow==9.2.0
 tqdm==4.64.0
 matplotlib==3.5.1
+pandas==1.4.2
 albumentations==1.2.1
 opencv-python==4.5.5
 yacs==0.1.8

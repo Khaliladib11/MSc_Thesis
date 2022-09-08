@@ -1,2 +1,2 @@
 classes: ['__bgr__', 'pedestrian', 'car', 'traffic light', 'traffic sign']
-relative_path: '..'
+relative_path: '.'

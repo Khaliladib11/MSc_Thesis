@@ -72,9 +72,9 @@ pip install -R requirements.txt
 ## Train
 ### Object Detection
 #### Faster RCNN
-To train F**aster RCNN** model run the following command:
+To train **Faster RCNN** model run the following command:
 ```bash
-python train.py --model fasterrcnn  --data './data/fasterrcnn.yaml' --batch-size 32 --img-size 640 --total_epochs 20 --logger_path 'logs' --checkpoint_path 'checkpoints' --project 'Faster RCNN' --name 'version0' --num_workers 4 --pin_memory True 
+python train.py --model fasterrcnn  --data './data/fasterrcnn.yaml' --batch-size 1 --img-size 640 --total_epochs 20 --logger_path 'logs' --checkpoint_path 'checkpoints' --project 'Faster RCNN' --name 'version0' --num_workers 1 
 ```
 Where `model` to specify that we want **Faster RCNN** model, `batch-size` for batch size, `img-size` for resizing the images and finally `--total_epochs` for the epochs.
 
@@ -112,8 +112,10 @@ python prepare.py --yolo_version yolov5 --dataset_path '../yolov5/dataset' --dat
 5- train the model:
 ```bash
 cd ../yolov5
-python train.py --img 640 --batch 32 --epochs 100 --data './data/dataset.yaml' --weights yolov5s.pt --optimizer Adam --name yolo5s_bdd
+python train.py --img 640 --batch 32 --epochs 50 --data './data/dataset.yaml' --weights yolov5s.pt --optimizer Adam --name yolo5s_bdd
 ```
+In place of `yolov5s.pt` you can select bigger model like `yolov5l.pt` or `yolov5x.pt`.
+
 For more information follow this [Tutorials](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data).
 
 #### Yolov7

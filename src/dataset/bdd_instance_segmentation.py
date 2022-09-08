@@ -31,7 +31,7 @@ class BDDInstanceSegmentation(BDD):
                  stage,
                  obj_cls=['__bgr__', 'person', 'car', 'rider', 'bicycle', 'motorcycle', 'truck', 'bus'],
                  relative_path='..',
-                 image_size=400,
+                 image_size=640,
                  transform=None):
         """
         Constructor for BDDInstanceSegmentation class
@@ -248,11 +248,20 @@ class BDDInstanceSegmentation(BDD):
 
         image, masks, bboxes, labels = self.data_augmentation(np.array(image), target['masks'], target['boxes'], target['labels'])
 
-        target['boxes'] = torch.tensor(bboxes)
+        target['boxes'] = torch.tensor(bboxes, dtype=torch.float32)
 
         target['labels'] = torch.tensor(labels, dtype=torch.int64)
 
         target['masks'] = torch.tensor(np.array(masks, dtype=np.uint8))
+
+        image_id = torch.tensor([idx])
+        area = (target['boxes'][:, 3] - target['boxes'][:, 1]) * (target['boxes'][:, 2] - target['boxes'][:, 0])
+        # suppose all instances are not crowd
+        iscrowd = torch.zeros((len(self.cls_to_idx),), dtype=torch.int64)
+
+        target['image_id'] = image_id
+        target['area'] = area
+        target['iscrowd'] = iscrowd
 
         image = self.image_transform(image)
 
