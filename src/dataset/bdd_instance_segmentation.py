@@ -55,7 +55,7 @@ class BDDInstanceSegmentation(BDD):
 
         self.cls_to_idx, self.idx_to_cls = self.create_idx()
 
-        if self.stage == 'train':
+        if self.stage == 'train' or self.stage == 'val':
             self.images_root = self.root / Path(cfg.DATASET.IMAGE_10K_ROOT + '/train')  # images root
             self.instance_segmentation_root = self.root / Path(
                 cfg.DATASET.INSTANCE_SEGMENTATION_ROOT + '/train')  # ins seg masks root

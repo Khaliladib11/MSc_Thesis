@@ -55,16 +55,17 @@ class Mask_RCNN(pl.LightningModule):
         loss_dict = self.model(images, targets)
         losses = sum(loss for loss in loss_dict.values())
 
-        return losses.item()
+        return losses
 
     def training_epoch_end(self, training_step_outputs) -> dict:
-        epoch_losses = torch.tensor([batch_loss for batch_loss in training_step_outputs])
+        epoch_losses = torch.tensor([batch_loss.item() for batch_loss in training_step_outputs])
         # epoch_losses = torch.stack(training_step_outputs)
         loss_mean = torch.mean(epoch_losses)
         self.log('training_loss', loss_mean)
         return {'train_loss': loss_mean}
 
     def validation_step(self, val_batch, batch_idx) -> float:
+        self.model.train()
         images, targets = val_batch
         targets = [{k: v for k, v in t.items()} for t in targets]
         loss_dict = self.model(images, targets)
@@ -72,7 +73,7 @@ class Mask_RCNN(pl.LightningModule):
         return va_losses
 
     def validation_epoch_end(self, validation_step_outputs) -> dict:
-        epoch_losses = torch.tensor([batch_loss for batch_loss in validation_step_outputs])
+        epoch_losses = torch.tensor([batch_loss.item() for batch_loss in validation_step_outputs])
         # epoch_losses = torch.stack(training_step_outputs)
         loss_mean = torch.mean(epoch_losses)
         self.log('val_loss', loss_mean)

@@ -98,7 +98,7 @@ class BDDDrivableSegmentation(BDD):
         :param apply_transform: Boolean value, if we want to apply the transform or not
         :return: PIL image or Tensor type
         """
-        image_name = str(self.db[idx]).split('\\')[-1].replace('.png', '.jpg')
+        image_name = str(self.db[idx]).split('/')[-1].replace('.png', '.jpg')
         image_path = str(self.images_root / Path('val' if self.stage == 'test' else 'train') / image_name)
         image = Image.open(image_path)
         if apply_transform:
