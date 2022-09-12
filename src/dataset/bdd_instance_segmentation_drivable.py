@@ -10,6 +10,7 @@ from PIL import Image
 import json
 from collections import deque
 from tqdm import tqdm
+from sklearn.model_selection import train_test_split
 
 from .bdd_utils import to_mask, bbox_from_instance_mask, get_coloured_mask
 
@@ -21,7 +22,8 @@ from .bdd import BDD
 # Define color map to be used when displaying the images with bounding boxes
 COLOR_MAP = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue']
 
-class BDDInstanceSegmentation(BDD):
+
+class BDDInstanceSegmentationDrivable(BDD):
     """
     BDD class for Instance Segmentation task
     """
@@ -42,34 +44,48 @@ class BDDInstanceSegmentation(BDD):
         :param image_size:  tuple that contains the image size (w, h)
         :param transform: torchvision. Transforms as input
         """
-        super(BDDInstanceSegmentation, self).__init__(cfg=cfg,
+        super(BDDInstanceSegmentationDrivable, self).__init__(cfg=cfg,
                                                       stage=stage,
                                                       obj_cls=obj_cls,
                                                       relative_path=relative_path,
                                                       image_size=image_size,
                                                       transform=transform)
 
-        # check if the classes are in the DETECTION_CLASSES
-        assert all(cls in cfg.DATASET.INSTANCE_CLASSES for cls in
-                   obj_cls), f"Please choose classes from the following: {cfg.DATASET.INSTANCE_CLASSES}"
-
         self.cls_to_idx, self.idx_to_cls = self.create_idx()
+        self.image_root = os.path.join(self.root, cfg.DATASET.IMAGE_10K_ROOT, 'train')
+        self.images = os.listdir(self.image_root)
+        self.instance_masks_path = os.path.join(self.root, cfg.DATASET.INSTANCE_SEGMENTATION_ROOT, 'train')
+        self.instance_masks = os.listdir(self.instance_masks_path)
+        self.polygon_root = os.path.join(self.root, cfg.DATASET.INSTANCE_SEGMENTATION_POLYGON_ROOT,
+                                         'ins_seg_train.json')
 
-        if self.stage == 'train' or self.stage == 'val':
-            self.images_root = self.root / Path(cfg.DATASET.IMAGE_10K_ROOT + '/train')  # images root
-            self.instance_segmentation_root = self.root / Path(
-                cfg.DATASET.INSTANCE_SEGMENTATION_ROOT + '/train')  # ins seg masks root
-            self.polygon_root = self.root / Path(
-                cfg.DATASET.INSTANCE_SEGMENTATION_POLYGON_ROOT + '/ins_seg_train.json')  # polygon root
-        elif self.stage == 'test':
-            self.images_root = self.root / Path(cfg.DATASET.IMAGE_10K_ROOT + '/val')  # images root
-            self.instance_segmentation_root = self.root / Path(
-                cfg.DATASET.INSTANCE_SEGMENTATION_ROOT + '/val')  # ins seg masks root
-            self.polygon_root = self.root / Path(
-                cfg.DATASET.INSTANCE_SEGMENTATION_POLYGON_ROOT + '/ins_seg_val.json')  # polygon root
+        self.polygon_drviable_root = os.path.join(self.root, cfg.DATASET.DRIVABLE_AREA_POLYGON_ROOT, 'drivable_train.json')
+        self.drivable_masks_path = os.path.join('..', cfg.DATASET.ROOT, cfg.DATASET.DRIVABLE_AREA_MASK, 'train')
+        self.drivable_masks = os.listdir(self.drivable_masks_path)
 
+        self.available_images = self.intersection()
         _db = self.__create_db()
         self.db = self.split_data(_db)
+
+    def intersection(self):
+        masks = [mask.replace('.png', '.jpg') for mask in self.drivable_masks]
+        lst3 = [value for value in self.images if value in masks]
+        return lst3
+
+    # method to split the data into train and val based on percentage
+    def split_data(self, db, train_size=80):
+        db = list(db)
+
+        train_db, test_db = train_test_split(db, test_size=1 - (train_size / 100), random_state=42)
+
+        val_db, test_db = train_test_split(test_db, test_size=0.5, random_state=42)
+
+        if self.stage == 'train':
+            return deque(train_db)
+        elif self.stage == 'val':
+            return deque(val_db)
+        elif self.stage == 'test':
+            return deque(test_db)
 
     def data_augmentation(self, image, masks, bboxes, labels):
         """
@@ -109,18 +125,25 @@ class BDDInstanceSegmentation(BDD):
         method to create the db of the class
         :return: deque object contains the necessary information
         """
-        polygon_annotation = deque(self.__load_annotations())
+        masks_polygon, drivable_polygon = self.__load_annotations()
         db = deque()
-        for polygon in tqdm(polygon_annotation):
-            filtered_labels = self.__filter_labels(polygon['labels'])
+        for polygon_key in tqdm(masks_polygon):
+            polygon = masks_polygon[polygon_key]
+            if polygon['name'] in self.available_images:
+                filtered_labels = self.__filter_labels(polygon['labels'])
+                if 'labels' in drivable_polygon[polygon['name']].keys():
+                    drivable_labels = drivable_polygon[polygon_key]['labels']
+                    for drivable_label in drivable_labels:
+                        drivable_label['category'] = 'road'
+                        filtered_labels.append(drivable_label)
 
-            if len(filtered_labels):
-                db.append({
-                    'image_path': self.images_root / Path(polygon['name']),
-                    'mask_path': self.instance_segmentation_root / Path(polygon['name'].replace('.jpg', '.png')),
-                    'labels': filtered_labels
-                })
-
+                if len(filtered_labels):
+                    db.append({
+                        'image_path': os.path.join(self.image_root, polygon['name']),
+                        'mask_path': os.path.join(self.instance_masks_path, polygon['name'].replace('.jpg', '.png')),
+                        'drivable_path': os.path.join(self.drivable_masks_path, polygon['name'].replace('.jpg', '.png')),
+                        'labels': filtered_labels
+                    })
         return db
 
     def __load_annotations(self):
@@ -131,7 +154,20 @@ class BDDInstanceSegmentation(BDD):
         with open(self.polygon_root, 'r') as f:
             polygon_annotation = json.load(f)
 
-        return polygon_annotation
+        with open(self.polygon_drviable_root, 'r') as f:
+            polygon_drivable_annotation = json.load(f)
+
+        masks_annotations = dict()
+        drivable_annotations = dict()
+
+        for polygon in polygon_annotation:
+            masks_annotations[polygon['name']] = polygon
+
+        for drivable_polygon in polygon_drivable_annotation:
+            drivable_polygon
+            drivable_annotations[drivable_polygon['name']] = drivable_polygon
+
+        return masks_annotations, drivable_annotations
 
     def __filter_labels(self, labels):
         """
@@ -176,6 +212,17 @@ class BDDInstanceSegmentation(BDD):
 
         return image
 
+    def get_drivable_mask(self, idx):
+        """
+        method to get the mask for the drivable area
+        :param idx:
+        :return:
+        """
+        drivable_mask_path = self.db[idx]['drivable_path']
+        mask = np.array(Image.open(drivable_mask_path))
+        # mask = torch.tensor(mask, dtype=torch.uint8)
+        return mask
+
     def get_mask(self, idx):
         """
         method to get the mask of the image
@@ -205,6 +252,7 @@ class BDDInstanceSegmentation(BDD):
                     boxes.append(box)
                     labels.append(label)
 
+
         target['boxes'] = boxes
         target['labels'] = labels
         target['masks'] = masks
@@ -215,25 +263,17 @@ class BDDInstanceSegmentation(BDD):
     def display_image(self, image, masks, boxes, labels):
         if isinstance(image, Image.Image):
             image = np.array(image)
-        for mask in masks:
-            rgb_mask = get_coloured_mask(mask)
+        for idx, mask in enumerate(masks):
+            rgb_mask, color = get_coloured_mask(mask)
             image = cv2.addWeighted(image, 1, rgb_mask, 0.5, 0)
+            bbox = [(int(boxes[idx][0]), int(boxes[idx][1])), (int(boxes[idx][2]), int(boxes[idx][3]))]
+            cv2.rectangle(image, bbox[0], bbox[1], color=color, thickness=2)
+            cv2.putText(image, self.idx_to_cls[labels[idx]], bbox[0], cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0),
+                        thickness=2)
 
-        fig, ax = plt.subplots(figsize=(20,20))
-        ax.imshow(image)
-        for i, mask in enumerate(labels):
-            bbox = boxes[i]
-            rect = patches.Rectangle((bbox[0], bbox[1]), bbox[2] - bbox[0], bbox[3] - bbox[1],
-                                     edgecolor=COLOR_MAP[labels[i]],
-                                     facecolor="none", linewidth=2)
-            plt.text(bbox[0], bbox[1], self.idx_to_cls[labels[i]], verticalalignment="top",
-                     color=COLOR_MAP[labels[i]])
-
-            ax.add_patch(rect)
-
+        plt.imshow(image)
         plt.axis('off')
         plt.show()
-
 
     # collate function to be used with the dataloader, since the not all the images has the same number of objects
     def collate_fn(self, batch):
@@ -246,7 +286,8 @@ class BDDInstanceSegmentation(BDD):
         image = self.get_image(idx, False)
         target = self._get_labels(idx)
 
-        image, masks, bboxes, labels = self.data_augmentation(np.array(image), target['masks'], target['boxes'], target['labels'])
+        image, masks, bboxes, labels = self.data_augmentation(np.array(image), target['masks'], target['boxes'],
+                                                              target['labels'])
 
         target['boxes'] = torch.tensor(bboxes, dtype=torch.float32)
 
