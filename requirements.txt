@@ -4,7 +4,7 @@
 torch==1.12.0
 torchvision==0.13
 pytorch-lightning==1.7.0
-numpy==1.22.0
+numpy~=1.21.6
 pillow==9.2.0
 tqdm==4.64.0
 matplotlib==3.5.1
@@ -14,7 +14,8 @@ opencv-python==4.5.5
 yacs==0.1.8
 wandb==0.13.1
 
-torchmetrics~=0.9.3
-scikit-learn~=1.0.2
-yaml~=0.2.5
-pyyaml~=6.0
+torchmetrics==0.9.3
+scikit-learn==1.0.2
+yaml==0.2.5
+pyyaml==6.0
+flask==2.0.3

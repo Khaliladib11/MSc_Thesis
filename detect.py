@@ -16,6 +16,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 COLOR_MAP = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue']
+
 IDX_TO_CLS = {
     0: '__bgr__',
     1: 'pedestrian',

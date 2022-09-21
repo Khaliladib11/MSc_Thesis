@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+import io
+import os
 from PIL import Image
 
 import torch
@@ -154,9 +156,14 @@ class Faster_RCNN(pl.LightningModule):
 
         return outputs
 
-    def predict(self, image_path, threshold, device):
+    def predict(self, image, confidence_score, device):
         self.model.eval()
-        image = Image.open(image_path)
+        if isinstance(image, (bytes, bytearray)):
+            image = Image.open(io.BytesIO(image))
+        elif isinstance(image, str):
+            assert os.path.exists(image), "This image doesn't exists"
+            image = Image.open(io.BytesIO(image))
+
         tensor_image = self.transform(image)
         tensor_image = tensor_image.unsqueeze(0)
         tensor_image = tensor_image.to(device)
@@ -173,7 +180,7 @@ class Faster_RCNN(pl.LightningModule):
         }
 
         for idx, score in enumerate(scores):
-            if score > threshold:
+            if score > confidence_score:
                 prediction['boxes'].append(boxes[idx])
                 prediction['scores'].append(scores[idx])
                 prediction['labels'].append(labels[idx])
