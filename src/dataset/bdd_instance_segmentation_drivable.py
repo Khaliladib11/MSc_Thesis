@@ -60,7 +60,7 @@ class BDDInstanceSegmentationDrivable(BDD):
                                          'ins_seg_train.json')
 
         self.polygon_drviable_root = os.path.join(self.root, cfg.DATASET.DRIVABLE_AREA_POLYGON_ROOT, 'drivable_train.json')
-        self.drivable_masks_path = os.path.join('..', cfg.DATASET.ROOT, cfg.DATASET.DRIVABLE_AREA_MASK, 'train')
+        self.drivable_masks_path = os.path.join(self.root, cfg.DATASET.DRIVABLE_AREA_MASK, 'train')
         self.drivable_masks = os.listdir(self.drivable_masks_path)
 
         self.available_images = self.intersection()

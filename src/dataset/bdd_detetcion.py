@@ -111,7 +111,7 @@ class BDDDetection(BDD):
         # labels = self.__filter_data(labels)
 
         if self.stage == 'test':
-            labels = random.sample(labels, 2500)
+            labels = random.sample(labels, 5000)
         else:
             labels = random.sample(labels, 40000)
 
