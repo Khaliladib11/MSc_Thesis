@@ -1,5 +1,6 @@
 # Folders
-
+/.idea
+/.ipynb_checkpoints
 /dataset
 /weights
 /checkpoints
