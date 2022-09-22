@@ -162,7 +162,7 @@ class Faster_RCNN(pl.LightningModule):
             image = Image.open(io.BytesIO(image))
         elif isinstance(image, str):
             assert os.path.exists(image), "This image doesn't exists"
-            image = Image.open(io.BytesIO(image))
+            image = Image.open(image)
 
         tensor_image = self.transform(image)
         tensor_image = tensor_image.unsqueeze(0)
