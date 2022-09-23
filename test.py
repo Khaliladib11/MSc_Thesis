@@ -1,5 +1,6 @@
 import yaml
 import argparse
+from utils import *
 from src.models.Detection.Faster_RCNN import Faster_RCNN
 from src.dataset.bdd_detetcion import BDDDetection
 from src.config.defaults import cfg
@@ -9,14 +10,6 @@ import pandas as pd
 import warnings
 
 warnings.filterwarnings("ignore")
-
-
-def export_mAP(mAPs, file_name):
-    df = pd.DataFrame(columns=['Class', 'mAP[0.50:0.05:0.95]', 'mAP[0.50]', 'mAP[0.75]'])
-    for mAP in mAPs:
-        df.loc[len(df.index)] = [mAP, mAPs[mAP]['mAP'], mAPs[mAP]['mAP50'], mAPs[mAP]['mAP75']]
-
-    df.to_csv(file_name, encoding='utf-8', index=False)
 
 
 if __name__ == '__main__':
@@ -128,29 +121,31 @@ if __name__ == '__main__':
 
         mAPs = {
             'all': {
-                'mAP': round(mAP['map'].item()),
-                'mAP50': round(mAP['map_50'].item()),
-                'mAP75': round(mAP['map_75'].item()),
+                'mAP': round(mAP['map'].item(), 4),
+                'mAP50': round(mAP['map_50'].item(), 4),
+                'mAP75': round(mAP['map_75'].item(), 4),
             },
             'person': {
-                'mAP': round(mAP_person['map'].item()),
-                'mAP50': round(mAP_person['map_50'].item()),
-                'mAP75': round(mAP_person['map_75'].item()),
+                'mAP': round(mAP_person['map'].item(), 4),
+                'mAP50': round(mAP_person['map_50'].item(), 4),
+                'mAP75': round(mAP_person['map_75'].item(), 4),
             },
             'car': {
-                'mAP': round(mAP_car['map'].item()),
-                'mAP50': round(mAP_car['map_50'].item()),
-                'mAP75': round(mAP_car['map_75'].item()),
+                'mAP': round(mAP_car['map'].item(), 4),
+                'mAP50': round(mAP_car['map_50'].item(), 4),
+                'mAP75': round(mAP_car['map_75'].item(), 4),
             },
             'traffic light': {
-                'mAP': round(mAP_tl['map'].item()),
-                'mAP50': round(mAP_tl['map_50'].item()),
-                'mAP75': round(mAP_tl['map_75'].item()),
+                'mAP': round(mAP_tl['map'].item(), 4),
+                'mAP50': round(mAP_tl['map_50'].item(), 4),
+                'mAP75': round(mAP_tl['map_75'].item(), 4),
             },
             'traffic sign': {
-                'mAP': round(mAP_ts['map'].item()),
-                'mAP50': round(mAP_ts['map_50'].item()),
-                'mAP75': round(mAP_ts['map_75'].item()),
+                'mAP': round(mAP_ts['map'].item(), 4),
+                'mAP50': round(mAP_ts['map_50'].item(), 4),
+                'mAP75': round(mAP_ts['map_75'].item(), 4),
             }
         }
-        export_mAP(mAPs, export_mAP)
+
+        # save the result as csv file
+        export_map(mAPs, save_path)

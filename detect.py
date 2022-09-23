@@ -37,15 +37,19 @@ if __name__ == '__main__':
     obj_cls = data['classes']  # the classes we want to work one
     relative_path = data['relative_path']  # relative path to the dataset
 
+    # create idx and cls dict
     idx_to_cls = create_cls_dic(obj_cls)
 
+    # check source path
     assert os.path.exists(source), "This image doesn't exists"
 
+    # Load model
     if model_name == 'fasterrcnn':
-        model = Faster_RCNN.load_from_checkpoint(weights)
+        model = Faster_RCNN.load_from_checkpoint(weights)  # Faster RCNN
     elif model_name == 'maskrcnn':
-        model = Mask_RCNN.load_from_checkpoint(weights)
+        model = Mask_RCNN.load_from_checkpoint(weights)  # Mask RCNN
 
+    # get prediction
     output, fps = detection_predict(model=model, image=source, confidence_score=confidence_score)
-    print(f"Frame per Second: {fps}")
-    display(image=source, prediction=output, save_path=save_path, idx_to_cls=idx_to_cls)
+    print(f"Frame per Second: {fps}")  # speed
+    display(image=source, prediction=output, save_path=save_path, idx_to_cls=idx_to_cls)  # display result and save it

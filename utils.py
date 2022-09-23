@@ -4,6 +4,7 @@ import random
 import time
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
@@ -14,7 +15,29 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
+color_map = [[0, 255, 0], [0, 0, 255], [255, 0, 0], [0, 255, 255], [255, 255, 0], [255, 0, 255], [80, 70, 180],
+             [250, 80, 190], [245, 145, 50], [70, 150, 250], [50, 190, 190]]
+
+def export_map(mAPs, file_name) -> None:
+    """
+    Function to export the result of testing the model as csv
+    :param mAPs: dictionary contains the results
+    :param file_name: path to the file where you want to save
+    :return:
+    """
+    df = pd.DataFrame(columns=['Class', 'mAP[0.50:0.05:0.95]', 'mAP[0.50]', 'mAP[0.75]'])
+    for mAP in mAPs:
+        df.loc[len(df.index)] = [mAP, mAPs[mAP]['mAP'], mAPs[mAP]['mAP50'], mAPs[mAP]['mAP75']]
+
+    df.to_csv(file_name, encoding='utf-8', index=False)
+
+
 def create_cls_dic(objs) -> dict:
+    """
+    Function to create dictionary to map from index to class
+    :param objs: list of object you want to classify (including background)
+    :return: dictionary
+    """
     idx_to_cls = {}
     i = 0
     for obj in objs:
@@ -24,7 +47,12 @@ def create_cls_dic(objs) -> dict:
     return idx_to_cls
 
 
-def image_transform(image):
+def image_transform(image) -> torch.Tensor:
+    """
+    Function to apply image transform before feed it to the model
+    :param image: image of Image.Image or numpy.array type
+    :return: tensor
+    """
     t = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(
@@ -33,32 +61,39 @@ def image_transform(image):
     ])
     return t(image)
 
-def detection_predict(model, image, confidence_score=0.5, device=None) -> dict:
+
+def detection_predict(model, image, confidence_score=0.5, device=None) -> tuple:
     """
     method to predict the bounding boxes and classes using faster rcnn model
-    :param model: the faster rcnn model
+    :param model: the model you want to use (Faster RCNN, Mask RCNN)
     :param image: the image, it can be path to an image or array of bytes
     :param confidence_score: confidence score used to predict
     :param device: the device (gpu, cpu)
-    :return: dict()
+    :return: tuple contains dictionary of the prediction and float number
     """
+
+    # check image type
     if isinstance(image, (bytes, bytearray)):
-        image = Image.open(io.BytesIO(image))
+        image = Image.open(io.BytesIO(image))  # byte array
+
     elif isinstance(image, str):
         assert os.path.exists(image), "This image doesn't exists"
         try:
-            image = Image.open(image)
-            # do stuff
+            image = Image.open(image)  # path to an image
         except IOError:
             print("An exception occurred, make sure you have selected an image type.")
-    elif isinstance(image, Image) or isinstance(image, np):
+
+    elif isinstance(image, Image.Image) or isinstance(image, np.ndarray):
+        # if it is Image.Image or ndarray then pass
         pass
     else:
+        # else raise an exception
         raise Exception("You must input: bytes, Image type, path for an image, or numpy array.")
 
     # check device
     if device is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     tensor_image = image_transform(np.array(image))  # convert image to tensor and apply some transform
     tensor_image = tensor_image.unsqueeze(0)  # add batch dimension
     model.eval()  # put model on evaluation mode
@@ -87,6 +122,7 @@ def detection_predict(model, image, confidence_score=0.5, device=None) -> dict:
         predict_masks = True
         output['masks'] = []
 
+    # Filter the prediction based on the confidence score threshold
     for idx, score in enumerate(scores):
         # check score
         if score > confidence_score:
@@ -107,18 +143,13 @@ def get_coloured_mask(mask):
       method:
         - the masks of each predicted object is given random colour for visualization
     """
-    colours = [[0, 255, 0], [0, 0, 255], [255, 0, 0], [0, 255, 255], [255, 255, 0], [255, 0, 255], [80, 70, 180],
-               [250, 80, 190], [245, 145, 50], [70, 150, 250], [50, 190, 190]]
+    colours = color_map
     r = np.zeros_like(mask).astype(np.uint8)
     g = np.zeros_like(mask).astype(np.uint8)
     b = np.zeros_like(mask).astype(np.uint8)
     r[mask == 1], g[mask == 1], b[mask == 1] = colours[random.randrange(0, 10)]
     coloured_mask = np.stack([r, g, b], axis=2)
     return coloured_mask
-
-
-color_map = [[0, 255, 0], [0, 0, 255], [255, 0, 0], [0, 255, 255], [255, 255, 0], [255, 0, 255], [80, 70, 180],
-             [250, 80, 190], [245, 145, 50], [70, 150, 250], [50, 190, 190]]
 
 
 def display(image, prediction, save_path, idx_to_cls, rect_th=2, text_size=0.5, text_th=2):

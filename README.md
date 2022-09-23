@@ -22,18 +22,22 @@
 │ │ ├─bdd.py  # Superclass dataset，Parent class
 │ │ ├─bdd_detetcion.py # Subclass for detection task
 │ │ ├─bdd_drivable_segmentation.py # Subclass for drivabel area segmetation task
-│ │ ├─bdd_panoptic.py # Subclass for Panopric segmetation task
-│ │ ├─bdd_segmentation.py # Subclass for semantic segmentation segmetation task
+│ │ ├─bdd_instance_segmentation.py # Subclass for instance segmetation task
+│ │ ├─bdd_instance_segmentation_drivable.py # Subclass for instance segmentation with drivable area task
+│ │ ├─bdd_utils.py  # file contains useful method
 │ ├─dbs
 │ │ ├─test_db.json # pre-created test db
 │ │ ├─train_db.json # pre-created train db
 │ │ ├─val_db.json # pre-created val db
 │ ├─models
 │ │ ├─Detection
+│ │ │ ├─detection_models.py  # file contains the method to return the Faster RCNN model
 │ │ │ ├─Faster_RCNN.py # Faster RCNN class
 │ │ ├─Segmentation
 │ │ │ ├─FCN.py # FCN class
 │ │ │ ├─DeepLab.py # DeepLabv3+ class
+│ │ │ ├─MaskRCNN.py # MaskRCNN class
+│ │ │ ├─segmenation_models.py # file contains the method to return the models for segmentatation
 │ ├─utils
 │ │ ├─DataLoaders.py # dataloader function
 | | ├─utils.py # useful function
@@ -59,6 +63,11 @@
 │ │ │ ├─pan_seg
 │ │ │ ├─ins_seg
 │ │ │ ├─pan_seg
+├─train.py  # file contains the functions to train Faster RCNN and MASk RCNN
+├─test.py  # file contains the functions to evaluate the models
+├─detect.py  # file contains the functions to run inference
+├─prepare.py  # file used to prepare the data to YOLO algorithms
+├─utils.py  # contains useful functions to train, test and detect
 ```
 ---
 ## Requirements
