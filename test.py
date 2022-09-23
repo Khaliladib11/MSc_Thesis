@@ -13,7 +13,6 @@ warnings.filterwarnings("ignore")
 
 def export_mAP(mAPs, file_name):
     df = pd.DataFrame(columns=['Class', 'mAP[0.50:0.05:0.95]', 'mAP[0.50]', 'mAP[0.75]'])
-    df['Class'] = mAPs.keys()
     for mAP in mAPs:
         df.loc[len(df.index)] = [mAP, mAPs[mAP]['mAP'], mAPs[mAP]['mAP50'], mAPs[mAP]['mAP75']]
 
