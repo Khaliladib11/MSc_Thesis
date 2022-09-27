@@ -82,6 +82,17 @@ if __name__ == '__main__':
         │ │ ├─test
         │ │ ├─val
         """
+        if not os.path.exists(os.path.join(dataset_path, 'images')):
+            os.path.join(dataset_path, 'images')
+            os.path.join(dataset_path, 'images', 'train')
+            os.path.join(dataset_path, 'images', 'val')
+            os.path.join(dataset_path, 'images', 'test')
+        if not os.path.exists(os.path.join(dataset_path, 'labels')):
+            os.mkdir(os.path.join(dataset_path, 'labels'))
+            os.path.join(dataset_path, 'images', 'train')
+            os.path.join(dataset_path, 'images', 'val')
+            os.path.join(dataset_path, 'images', 'test')
+
         # train data
         images_training_path = os.path.join(dataset_path, 'images', 'train')
         labels_training_path = os.path.join(dataset_path, 'labels', 'train')
@@ -108,6 +119,19 @@ if __name__ == '__main__':
         │ │ ├─images
         │ │ ├─labels
         """
+        if not os.path.exists(os.path.join(dataset_path, 'train')):
+            os.path.join(dataset_path, 'train')
+            os.path.join(dataset_path, 'train', 'images')
+            os.path.join(dataset_path, 'train', 'labels')
+        if not os.path.exists(os.path.join(dataset_path, 'val')):
+            os.mkdir(os.path.join(dataset_path, 'val'))
+            os.path.join(dataset_path, 'val', 'images')
+            os.path.join(dataset_path, 'val', 'labels')
+        if not os.path.exists(os.path.join(dataset_path, 'test')):
+            os.mkdir(os.path.join(dataset_path, 'test'))
+            os.path.join(dataset_path, 'test', 'images')
+            os.path.join(dataset_path, 'test', 'labels')
+
         # train data
         images_training_path = os.path.join(dataset_path, 'train', 'images')
         labels_training_path = os.path.join(dataset_path, 'train', 'labels')

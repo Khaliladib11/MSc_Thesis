@@ -2,7 +2,7 @@ import os
 import io
 import random
 import time
-
+from pprint import pprint
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,13 +10,14 @@ from PIL import Image
 import cv2
 import torch
 from torchvision import transforms
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
 import warnings
 
 warnings.filterwarnings("ignore")
 
-
 color_map = [[0, 255, 0], [0, 0, 255], [255, 0, 0], [0, 255, 255], [255, 255, 0], [255, 0, 255], [80, 70, 180],
              [250, 80, 190], [245, 145, 50], [70, 150, 250], [50, 190, 190]]
+
 
 def export_map(mAPs, file_name) -> None:
     """
@@ -298,3 +299,100 @@ def inference_video(model, video_source, idx_to_cls, confidence_score=0.5, devic
     # calculate and print the average FPS
     avg_fps = total_fps / frame_count
     print(f"Average FPS: {avg_fps:.3f}")
+
+
+# YOLO evaluation
+
+def yolo_to_pascal(x, y, w, h, width=1280, height=720) -> tuple:
+    """
+    Function to convert YOLO format (xywh) to Pascal voc format (xyxy)
+    :param x: float number, x center
+    :param y: float number, y center
+    :param w: float width of the bounding box
+    :param h: float height of the bounding box
+    :param width: float width of the image
+    :param height: float width of the image
+    :return: tuple contains xmin, ymin, xmax, ymax
+    """
+    xmax = int((x * width) + (w * width) / 2.0)
+    xmin = int((x * width) - (w * width) / 2.0)
+    ymax = int((y * height) + (h * height) / 2.0)
+    ymin = int((y * height) - (h * height) / 2.0)
+    return (xmin, ymin, xmax, ymax)
+
+
+def prepare_gt(file_path) -> dict:
+    """
+    Function to prepare th ground truth annotation from the file to use them in evaluation
+    :param file_path: the path for the ground truth annotations
+    :return: dictionary contains the bounding boxes and labels
+    """
+    output = {
+        "boxes": [],
+        "labels": [],
+    }
+    with open(file_path, 'r') as f:
+        for line in f:
+            line = line.split()
+            label = int(line[0])
+            box = [float(b) for b in line[1:]]
+            xmin, ymin, xmax, ymax = yolo_to_pascal(box[0], box[1], box[2], box[3])
+            output['boxes'].append([xmin, ymin, xmax, ymax])
+            output['labels'].append(label)
+
+    output['boxes'] = torch.tensor(output['boxes'])
+    output['labels'] = torch.tensor(output['labels'])
+
+    return output
+
+
+def prepare_prediction(file_path) -> dict:
+    """
+    Function to prepare the predicted bounding boxes to use them in evaluation
+    :param file_path: the path for the prediction files
+    :return: dictionary contains the bounding boxes, scores and labels
+    """
+    output = {
+        "boxes": [],
+        "scores": [],
+        "labels": [],
+    }
+    with open(file_path, 'r') as f:
+        for line in f:
+            line = line.split()
+            label = int(line[0])
+            box = [float(b) for b in line[1:-1]]
+            score = float(line[-1])
+            xmin, ymin, xmax, ymax = yolo_to_pascal(box[0], box[1], box[2], box[3])
+            output['boxes'].append([xmin, ymin, xmax, ymax])
+            output['scores'].append(score)
+            output['labels'].append(label)
+
+    output['boxes'] = torch.tensor(output['boxes'])
+    output['scores'] = torch.tensor(output['scores'])
+    output['labels'] = torch.tensor(output['labels'])
+    return output
+
+
+def yolo_evaluation(prediction_path, gt_path) -> dict:
+    """
+    Function to evaluate the performance of the YOLO algorithm
+    :param prediction_path: the path for the prediction folder that contains the prediction files
+    :param gt_path: the path for the ground truth folder that contains the ground truth files
+    :return: dictionary contains the mean average precision
+    """
+    assert os.path.exists(prediction_path), f"{prediction_path} folder not found"
+    assert os.path.exists(gt_path), f"{gt_path} folder not found"
+
+    pred_files = os.listdir(prediction_path)
+
+    metric = MeanAveragePrecision(box_format='xyxy', class_metrics=True)
+
+    for file in pred_files:
+        pre = prepare_prediction(os.path.join(prediction_path, file))
+        gt = prepare_gt(os.path.join(gt_path, file))
+        metric.update([pre], [gt])
+
+    mAP = metric.compute()
+
+    return mAP

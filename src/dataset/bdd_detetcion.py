@@ -111,7 +111,7 @@ class BDDDetection(BDD):
         # labels = self.__filter_data(labels)
 
         if self.stage == 'test':
-            labels = random.sample(labels, 5000)
+            labels = random.sample(labels, 2500)
         else:
             labels = random.sample(labels, 40000)
 
@@ -272,8 +272,9 @@ class BDDDetection(BDD):
         """
         image = self.get_image(idx, apply_transform=False)
         labels = self.db[idx]['classes']
-        bboxes = self.db[idx]['bboxes']
-        image, boxes, labels = self.data_augmentation(np.array(image), bboxes, labels)
+        boxes = self.db[idx]['bboxes']
+        if self.stage == 'train':
+            image, boxes, labels = self.data_augmentation(np.array(image), boxes, labels)
         image = self.image_transform(image)
         targets = {
             'labels': torch.tensor(labels, dtype=torch.int64),
