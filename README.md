@@ -214,6 +214,8 @@ python detect.py --data 'data/dataset.yaml' --weights 'path/to/weights' --conf-t
 
 <img src="./doc/images/map_all.jpg" width="700" height="500">
 
+---
+
 ## Demo
 checkout my YouTube video [here](https://www.youtube.com/watch?v=Iz9UvtoOEIY&lc=UgyuctQDF_CRAQKhMpR4AaABAg).
 
@@ -222,3 +224,5 @@ some results from yolov7x model:
 ![demo 1](./doc/images/demo_1.jpg)
 ![demo 2](./doc/images/demo_2.jpg)
 ![demo 3](./doc/images/demo_3.jpg)
+
+---
