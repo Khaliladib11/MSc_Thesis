@@ -91,6 +91,7 @@ Where `model` to specify that we want **Faster RCNN** model, `batch-size` for ba
 To train using **Yolov5**:
 
 1- Create new virtual env using `virtualenv` or `conda` then activate it.
+
 2- Clone **Yolov5** repository outside this project:
 ```bash
 cd ..
@@ -104,12 +105,6 @@ git clone https://github.com/ultralytics/yolov5
 4- Create folder for the dataset inside yolov5 folder:
 ```bash
 mkdir dataset
-cd dataset
-mkdir images labels
-mkdir train test val
-cd ..
-cd labels
-mkdir train test val
 ```
 5- Create `dataset.yaml` file and place it inside `yolov5/data` (you can copy the one in data folder).
 
@@ -131,6 +126,7 @@ For more information follow this [Tutorials](https://github.com/ultralytics/yolo
 Almost the same as [Yolov5](####Yolov5)
 
 1- Create new virtual env using `virtualenv` or `conda` then activate it.
+
 2- Clone **Yolov7** repository outside this project:
 ```bash
 cd ..
@@ -144,14 +140,6 @@ git clone https://github.com/WongKinYiu/yolov7.git
 4- Create folder for the dataset inside **yolov7** folder:
 ```bash
 mkdir dataset
-cd dataset
-mkdir train test val
-cd train
-mkdir images labels
-cd ../test
-mkdir images labels
-cd ../val
-mkdir images labels
 ```
 5- Create `dataset.yaml` file and place it inside `yolov7/data` (you can copy the one in data folder).
 
@@ -170,3 +158,64 @@ For more information follow this [Tutorials](https://blog.paperspace.com/yolov7/
 
 
 ---
+
+## Evaluation
+### Faster RCNN
+To evaluate **Faster RCNN** model using mean average precision run the following command:
+```bash
+python test.py --model fasterrcnn --data './data/fasterrcnn.yaml' --weights 'path/to/fastercnn/weights' --save-path './fasterrcnn_map.csv'
+```
+
+### YOLO
+To evaluate **Yolov5** and **Yolov7** model using mean average precision run the following commands:
+
+First for **yolov5**:
+```bash
+cd ../yolov5
+python val.py --data 'data/dataset.yaml' --weights 'path/to/weights' --task test --save-txt --save-conf --project 'path/to/save/pred'
+```
+
+For **yolov7**:
+```bash
+cd ../yolov7
+python test.py --data 'data/dataset.yaml' --weights 'path/to/weights' --task test --save-txt --save-conf --project 'path/to/save/pred'
+```
+
+After that run this command:
+```bash
+cd ../MSc_Thesis
+python yolo_eval.py --pred 'path/to/labels/folder' --gt 'path/to/ground/truth'
+```
+
+Where `pred` is the path where the yolo models will save the prediction for each image as `.txt` files. `gt` is the path for the ground truth generated from the `prepare.py` files.
+
+---
+
+## Inference
+### Faster RCNN
+```bash
+python detect.py --model 'fasterrcnn' --data './data/fasterrcnn.yaml' --weights 'path/to/weights' --source 'path/to/image' --confidence-score 0.5 --save-path 'predicted_image.jpg'
+```
+### yolov5
+```bash
+cd ../yolov5
+python detect.py --data 'data/dataset.yaml' --weights 'path/to/weights' --conf-thres 0.5 --save-txt --save-conf --project 'path/to/save/pred'
+```
+### yolov7
+```bash
+cd ../yolov7
+python detect.py --data 'data/dataset.yaml' --weights 'path/to/weights' --conf-thres 0.5 --save-txt --save-conf --project 'path/to/save/pred'
+```
+
+
+
+## Results
+![Study for different input sizes](./doc/images/study.jpg)
+
+![COCO AP](./doc/images/map_all.jpg)
+
+### demo
+checkout my YouTube video [here](https://www.youtube.com/watch?v=Iz9UvtoOEIY&lc=UgyuctQDF_CRAQKhMpR4AaABAg).
+![demo 1](./doc/images/demo_1.jpg)
+![demo 2](./doc/images/demo_2.jpg)
+![demo 3](./doc/images/demo_3.jpg)
