@@ -4,11 +4,11 @@ from utils import *
 import warnings
 import argparse
 import yaml
+import torch
 
 warnings.filterwarnings("ignore")
 
 COLOR_MAP = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue']
-
 
 if __name__ == '__main__':
     # Define the parser
@@ -45,11 +45,33 @@ if __name__ == '__main__':
 
     # Load model
     if model_name == 'fasterrcnn':
-        model = Faster_RCNN.load_from_checkpoint(weights)  # Faster RCNN
+        try:
+            model = Faster_RCNN.load_from_checkpoint(weights)  # Faster RCNN
+        except Exception as e:
+            print("Could not load the model weights. Please make sure you're providing the correct model weights.")
     elif model_name == 'maskrcnn':
-        model = Mask_RCNN.load_from_checkpoint(weights)  # Mask RCNN
+        try:
+            model = Mask_RCNN.load_from_checkpoint(weights)  # Mask RCNN
+        except Exception as e:
+            print("Could not load the model weights. Please make sure you're providing the correct model weights.")
 
-    # get prediction
-    output, fps = detection_predict(model=model, image=source, confidence_score=confidence_score)
-    print(f"Frame per Second: {fps}")  # speed
-    display(image=source, prediction=output, save_path=save_path, idx_to_cls=idx_to_cls)  # display result and save it
+    elif model_name.startswith('yolov5'):
+        try:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            model = torch.hub.load('./yolov5', 'custom', path=weights, source='local', device=device, _verbose=False)
+            model.conf = confidence_score
+        except Exception as e:
+            print("Could not load the model weights. Please make sure you're providing the correct model weights.")
+        try:
+            image = Image.open(source)
+            results = model(image)
+            results.save()
+        except Exception as e:
+            print(e)
+
+    if model_name == 'fasterrcnn' or model_name == 'maskrcnn':
+        # get prediction
+        output, fps = detection_predict(model=model, image=source, confidence_score=confidence_score)
+        print(f"Frame per Second: {fps}")  # speed
+        display(image=source, prediction=output, save_path=save_path,
+                idx_to_cls=idx_to_cls)  # display result and save it
