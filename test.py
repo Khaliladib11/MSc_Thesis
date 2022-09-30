@@ -2,6 +2,7 @@ import yaml
 import argparse
 from utils import *
 from src.models.Detection.Faster_RCNN import Faster_RCNN
+from src.models.Segmentation.MaskRCNN import Mask_RCNN
 from src.dataset.bdd_detetcion import BDDDetection
 from src.config.defaults import cfg
 from src.utils.DataLoaders import get_loader
@@ -10,7 +11,6 @@ import pandas as pd
 import warnings
 
 warnings.filterwarnings("ignore")
-
 
 if __name__ == '__main__':
     # Define the parser
@@ -149,3 +149,45 @@ if __name__ == '__main__':
 
         # save the result as csv file
         export_map(mAPs, save_path)
+
+
+    elif model_name == 'maskrcnn':
+        model = Mask_RCNN.load_from_checkpoint(weights)
+
+        bdd_params = {
+            'cfg': cfg,
+            'stage': 'test',
+            'relative_path': relative_path,
+            'obj_cls': obj_cls,
+        }
+
+        bdd = BDDDetection(**bdd_params)
+
+        dataloader_args = {
+            'dataset': bdd,
+            'batch_size': 1,
+            'shuffle': False,
+            'collate_fn': bdd.collate_fn,
+            'pin_memory': True,
+            'num_workers': 1
+        }
+        dataloader = get_loader(**dataloader_args)
+
+        trainer = Trainer(accelerator='gpu', devices=1)
+        pred = trainer.predict(model, dataloader)
+
+        print("Start Computing mAP for all classes.")
+        mAP = model.metric.compute()
+
+        print("#" * 100)
+        print("Mean Average Precision")
+        print(f"Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = {round(mAP['map'].item(), 4)}")
+        print(
+            f"Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = {round(mAP['map_50'].item(), 4)}")
+        print(
+            f"Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = {round(mAP['map_75'].item(), 4)}")
+
+        classes = mAP['map_per_class'].tolist()
+        print(f"Average Precision  (AP) @[IoU=0.50:0.95] for person class = {round(classes[0], 4)}")
+        print(f"Average Precision  (AP) @[IoU=0.50:0.95] for car class = {round(classes[1], 4)}")
+        print(f"Average Precision  (AP) @[IoU=0.50:0.95] for road class = {round(classes[2], 4)}")

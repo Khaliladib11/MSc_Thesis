@@ -5,6 +5,7 @@ import torchvision
 import pytorch_lightning as pl
 
 from .segmentation_models import get_maskrcnn
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
 
 class Mask_RCNN(pl.LightningModule):
@@ -43,6 +44,7 @@ class Mask_RCNN(pl.LightningModule):
                                   pretrained=pretrained,
                                   pretrained_weights=pretrained_backbone,
                                   num_classes=self.num_classes)
+        self.metric = MeanAveragePrecision(class_metrics=True)
 
     def forward(self, x):
         return self.model(x)
@@ -77,8 +79,13 @@ class Mask_RCNN(pl.LightningModule):
         loss_mean = torch.mean(epoch_losses)
         self.log('val_loss', loss_mean)
 
-    def predict_step(self, batch):
-        pass
+    def predict_step(self, batch, batch_idx):
+        self.model.eval()
+        images, targets = batch
+        targets = [{k: v for k, v in t.items()} for t in targets]
+        outputs = self.model(images)
+        self.metric.update(outputs, targets)
+
 
     def configure_optimizers(self):
         optimizer_params = {
