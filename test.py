@@ -1,13 +1,16 @@
+import sys
 import yaml
 import argparse
-from utils import *
+from util import *
 from src.models.Detection.Faster_RCNN import Faster_RCNN
 from src.models.Segmentation.MaskRCNN import Mask_RCNN
 from src.dataset.bdd_detetcion import BDDDetection
+from src.dataset.bdd_instance_segmentation_drivable import BDDInstanceSegmentationDrivable
 from src.config.defaults import cfg
 from src.utils.DataLoaders import get_loader
 from pytorch_lightning import Trainer
 import pandas as pd
+from pprint import pprint
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -17,7 +20,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, default="./data/fasterrcnn.yaml", help='data.yaml path')
     parser.add_argument('--weights', type=str, default=None, help='train from checkpoint')
-    parser.add_argument('--model', type=str, default='fasterrcnn', choices=['fasterrcnn', 'deeplab', 'maskrcnn'],
+    parser.add_argument('--pred', type=str, default='', help='Path to the predictions folder')
+    parser.add_argument('--gt', type=str, default='', help='Path to the ground truth folder')
+    parser.add_argument('--model', type=str, default='fasterrcnn', choices=['fasterrcnn', 'deeplab', 'maskrcnn', 'yolov5', 'yolov7'],
                         help='the model and task you want to perform')
     parser.add_argument('--save-path', type=str, default='./mAP_results.csv',
                         help='Path and name of the file you want to export.')
@@ -37,7 +42,11 @@ if __name__ == '__main__':
 
     if model_name == "fasterrcnn":
         ## Load Model
-        model = Faster_RCNN.load_from_checkpoint(weights)
+        try:
+            model = Faster_RCNN.load_from_checkpoint(weights)
+        except Exception as e:
+            print("Could not load the model weights. Please make sure you're providing the correct model weights.")
+            sys.exit()
 
         bdd_params = {
             'cfg': cfg,
@@ -63,96 +72,14 @@ if __name__ == '__main__':
 
         print("Start Computing mAP for all classes.")
         mAP = model.metric.compute()
-        print("#" * 100)
-        print("Mean Average Precision")
-        print(f"Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = {round(mAP['map'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = {round(mAP['map_50'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = {round(mAP['map_75'].item(), 4)}")
-
-        print('\n')
-        print("Start Computing mAP for Person class.")
-        print("#" * 100)
-        mAP_person = model.metric_person.compute()
-        print("Mean Average Precision for Person class")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = {round(mAP_person['map'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = {round(mAP_person['map_50'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = {round(mAP_person['map_75'].item(), 4)}")
-
-        print('\n')
-        print("Start Computing mAP for Car class.")
-        print("#" * 100)
-        mAP_car = model.metric_car.compute()
-        print("Mean Average Precision for Car class")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = {round(mAP_car['map'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = {round(mAP_car['map_50'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = {round(mAP_car['map_75'].item(), 4)}")
-
-        print('\n')
-        print("Start Computing mAP for traffic light class.")
-        print("#" * 100)
-        mAP_tl = model.metric_tl.compute()
-        print("Mean Average Precision for traffic light class")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = {round(mAP_tl['map'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = {round(mAP_tl['map_50'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = {round(mAP_tl['map_75'].item(), 4)}")
-
-        print('\n')
-        print("Start Computing mAP for traffic sign class.")
-        print("#" * 100)
-        mAP_ts = model.metric_ts.compute()
-        print("Mean Average Precision for traffic sign class")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = {round(mAP_ts['map'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = {round(mAP_ts['map_50'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = {round(mAP_ts['map_75'].item(), 4)}")
-
-        mAPs = {
-            'all': {
-                'mAP': round(mAP['map'].item(), 4),
-                'mAP50': round(mAP['map_50'].item(), 4),
-                'mAP75': round(mAP['map_75'].item(), 4),
-            },
-            'person': {
-                'mAP': round(mAP_person['map'].item(), 4),
-                'mAP50': round(mAP_person['map_50'].item(), 4),
-                'mAP75': round(mAP_person['map_75'].item(), 4),
-            },
-            'car': {
-                'mAP': round(mAP_car['map'].item(), 4),
-                'mAP50': round(mAP_car['map_50'].item(), 4),
-                'mAP75': round(mAP_car['map_75'].item(), 4),
-            },
-            'traffic light': {
-                'mAP': round(mAP_tl['map'].item(), 4),
-                'mAP50': round(mAP_tl['map_50'].item(), 4),
-                'mAP75': round(mAP_tl['map_75'].item(), 4),
-            },
-            'traffic sign': {
-                'mAP': round(mAP_ts['map'].item(), 4),
-                'mAP50': round(mAP_ts['map_50'].item(), 4),
-                'mAP75': round(mAP_ts['map_75'].item(), 4),
-            }
-        }
-
-        # save the result as csv file
-        export_map(mAPs, save_path)
-
 
     elif model_name == 'maskrcnn':
-        model = Mask_RCNN.load_from_checkpoint(weights)
+        try:
+            model = Mask_RCNN.load_from_checkpoint(weights)
+        except Exception as e:
+            print("Could not load the model weights. Please make sure you're providing the correct model weights.")
+            sys.exit()
+
 
         bdd_params = {
             'cfg': cfg,
@@ -161,7 +88,7 @@ if __name__ == '__main__':
             'obj_cls': obj_cls,
         }
 
-        bdd = BDDDetection(**bdd_params)
+        bdd = BDDInstanceSegmentationDrivable(**bdd_params)
 
         dataloader_args = {
             'dataset': bdd,
@@ -179,15 +106,22 @@ if __name__ == '__main__':
         print("Start Computing mAP for all classes.")
         mAP = model.metric.compute()
 
-        print("#" * 100)
-        print("Mean Average Precision")
-        print(f"Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = {round(mAP['map'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = {round(mAP['map_50'].item(), 4)}")
-        print(
-            f"Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = {round(mAP['map_75'].item(), 4)}")
+    elif model_name.startswith('yolo'):
+        """
+        We evaluate Yolo models the same way
+        """
+        # get the path where the *.txt file are stored. Those files are generated from the model
+        prediction_path = args.pred
+        # path to the ground truth folder, where we have the *.txt file. Those files are genearted from the prepate.py file
+        gt_path = args.gt
 
-        classes = mAP['map_per_class'].tolist()
-        print(f"Average Precision  (AP) @[IoU=0.50:0.95] for person class = {round(classes[0], 4)}")
-        print(f"Average Precision  (AP) @[IoU=0.50:0.95] for car class = {round(classes[1], 4)}")
-        print(f"Average Precision  (AP) @[IoU=0.50:0.95] for road class = {round(classes[2], 4)}")
+        # check paths
+        assert os.path.exists(prediction_path), f"Predictions does not exists at {prediction_path}"
+        assert os.path.exists(gt_path), f"Predictions does not exists at {gt_path}"
+
+        # Evaluation
+        mAP = yolo_evaluation(prediction_path, gt_path)
+
+    # print
+    pprint(mAP)
+    export_map_json(mAP, json_file_name=f'mAP_{model_name}.json' , to_save_path=save_path)
