@@ -8,9 +8,9 @@
  
  ---
  
- ## Dataset
- Dataset used is BDD100K which is available [here](https://www.bdd100k.com/).
- 
+## Dataset
+Dataset used is BDD100K which is available [here](https://www.bdd100k.com/).
+In addition, the data is available on [my google drive](https://drive.google.com/drive/folders/1jupf1DEYrcL7nkt6gIDAx6ioIzv0yAYO?usp=sharing).
  ---
  
  ## Project Structure
@@ -51,6 +51,11 @@
 ├─notebooks
 │ ├─Faster RCNN Notebook.ipynb # Faster RCNN notebook
 │ ├─FCN Notebook.ipynb # FCN notebook
+├─api
+│ ├─app.py  # Flask App
+├─yolov5  # yolov5 repository
+├─yolov6  # yolov6 repository
+├─yolov7  # yolov7 repository
 ├─dataset
 │ ├─bdd100k
 │ │ ├─images
@@ -67,7 +72,7 @@
 ├─test.py  # file contains the functions to evaluate the models
 ├─detect.py  # file contains the functions to run inference
 ├─prepare.py  # file used to prepare the data to YOLO algorithms
-├─utils.py  # contains useful functions to train, test and detect
+├─util.py  # contains useful functions to train, test and detect
 ```
 ---
 ## Requirements
@@ -227,6 +232,8 @@ some results from yolov7x model:
 ![demo 3](./doc/images/demo_3.jpg)
 
 ---
+## Weights
+Weights can be downloaded from 
 
 ---
 ## Run Server
