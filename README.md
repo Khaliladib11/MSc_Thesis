@@ -200,6 +200,10 @@ Where `pred` is the path where the yolo models will save the prediction for each
 ```bash
 python detect.py --model 'fasterrcnn' --data './data/fasterrcnn.yaml' --weights 'path/to/weights' --source 'path/to/image' --confidence-score 0.5 --save-path 'predicted_image.jpg'
 ```
+### Mask RCNN
+```bash
+python detect.py --model 'maskrcnn' --data './data/maskrcnn.yaml' --weights 'path/to/weights' --source 'path/to/image' --confidence-score 0.5 --save-path 'predicted_image.jpg'
+```
 ### yolov5
 ```bash
 python detect.py --model 'yolov5' --weights 'path/to/weights' --source 'path/to/image' --conf-thres 0.5 --save-path 'yolov5_inference.jpg'
