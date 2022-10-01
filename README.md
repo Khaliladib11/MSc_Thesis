@@ -233,7 +233,7 @@ some results from yolov7x model:
 
 ---
 ## Weights
-Weights can be downloaded from 
+Weights can be downloaded from this [link](https://drive.google.com/drive/folders/1yIeiFDJ0quhH_Z0lxGnI0suEoiG2Jy2h?usp=sharing).
 
 ---
 ## Run Server
