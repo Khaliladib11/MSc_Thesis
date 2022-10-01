@@ -25,20 +25,30 @@ weights = {
     'fasterrcnn': '../weights/Faster RCNN/fasterrcnn/epoch=5-step=191964.ckpt',
     'yolov5s': '../weights/Yolov5/yolov5_train/yolo5s_bdd/weights/best.pt',
     'yolov5l': '../weights/Yolov5/yolov5_train/yolo5l_bdd/weights/best.pt',
-    'yolov5x': '../weights/Yolov5/yolov5_train/yolo5x_bdd/weights/best.pt'
+    'yolov5x': '../weights/Yolov5/yolov5_train/yolo5x_bdd/weights/best.pt',
+    'yolov7': '',
+    'yolov7x': ''
 }
 
-path_to_yolo = '../../Training/yolov5'
+path_to_yolov5 = '../../Training/yolov5'
+path_to_yolov7 = '../../Training/yolov7'
 
-fasterrcnn_model = Faster_RCNN.load_from_checkpoint(weights['fasterrcnn'])
-yolov5s, yolov5l, yolov5x = None, None, None
-# yolov5s = torch.hub.load(path_to_yolo, 'custom', path=weights['yolov5s'], source='local')
-# yolov5l = torch.hub.load(path_to_yolo, 'custom', path=weights['yolov5l'], source='local')
-# yolov5x = torch.hub.load(path_to_yolo, 'custom', path=weights['yolov5x'], source='local')
+
+try:
+    fasterrcnn_model = Faster_RCNN.load_from_checkpoint(weights['fasterrcnn'])
+    yolov5s = torch.hub.load(path_to_yolov5, 'custom', path=weights['yolov5s'], source='local')
+    yolov5l = torch.hub.load(path_to_yolov5, 'custom', path=weights['yolov5l'], source='local')
+    yolov5x = torch.hub.load(path_to_yolov5, 'custom', path=weights['yolov5x'], source='local')
+    yolov7 = torch.hub.load(path_to_yolov7, 'custom', path=weights['yolov7'], source='local', force_reload=True)
+    yolov7x = torch.hub.load(path_to_yolov7, 'custom', path=weights['yolov7x'], source='local', force_reload=True)
+
+except Exception as e:
+    print("There is problem with loading models")
+    sys.exit(1)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-available_models = ['yolov5s', 'yolov5l', 'yolov5x', 'fasterrcnn']
+available_models = ['yolov5s', 'yolov5l', 'yolov5x', 'yolov7', 'yolov7x', 'fasterrcnn']
 acceptable_file_format = ['jpg', 'jpeg', 'png']
 
 
@@ -81,6 +91,16 @@ def get_prediction(img_bytes, score, model_name) -> tuple:
         image = Image.open(io.BytesIO(img_bytes))
         yolov5x.conf = score
         df = yolov5x(image).pandas().xyxy[0]  # inference
+
+    elif model_name == 'yolov5':
+        image = Image.open(io.BytesIO(img_bytes))
+        yolov7.conf = score
+        df = yolov7(image).pandas().xyxy[0]  # inference
+
+    elif model_name == 'yolov7x':
+        image = Image.open(io.BytesIO(img_bytes))
+        yolov7x.conf = score
+        df = yolov7x(image).pandas().xyxy[0]  # inference
 
     # loop through the dataframe to get the predictions
     # yolov5 models return the data as pandas dataframe

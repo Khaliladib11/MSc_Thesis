@@ -1,10 +1,14 @@
+# Import Libraries
 import os
 import io
 import random
 import time
+import sys
+import json
 from pprint import pprint
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
@@ -15,22 +19,24 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+# Colors list
 color_map = [[0, 255, 0], [0, 0, 255], [255, 0, 0], [0, 255, 255], [255, 255, 0], [255, 0, 255], [80, 70, 180],
              [250, 80, 190], [245, 145, 50], [70, 150, 250], [50, 190, 190]]
 
 
-def export_map(mAPs, file_name) -> None:
+def export_map_json(mAP, json_file_name='mAP.json' , to_save_path='.') -> None:
     """
-    Function to export the result of testing the model as csv
-    :param mAPs: dictionary contains the results
-    :param file_name: path to the file where you want to save
-    :return:
+    Function used to exported the mean average precision results to a json file
+    :param mAP: dictionary contains the mAP results
+    :param json_file_name: the name of the json file
+    :param to_save_path: the path where you want to save the json file
+    :return: return None
     """
-    df = pd.DataFrame(columns=['Class', 'mAP[0.50:0.05:0.95]', 'mAP[0.50]', 'mAP[0.75]'])
-    for mAP in mAPs:
-        df.loc[len(df.index)] = [mAP, mAPs[mAP]['mAP'], mAPs[mAP]['mAP50'], mAPs[mAP]['mAP75']]
+    with open(os.path.join(to_save_path, json_file_name), "w") as outfile:
+        json.dump(mAP, outfile)
 
-    df.to_csv(file_name, encoding='utf-8', index=False)
+    print(f"mAP exported to {os.path.join(to_save_path, json_file_name)}.")
+
 
 
 def create_cls_dic(objs) -> dict:
@@ -52,7 +58,7 @@ def image_transform(image) -> torch.Tensor:
     """
     Function to apply image transform before feed it to the model
     :param image: image of Image.Image or numpy.array type
-    :return: tensor
+    :return: torch.Tensor type
     """
     t = transforms.Compose([
         transforms.ToTensor(),
@@ -83,6 +89,7 @@ def detection_predict(model, image, confidence_score=0.5, device=None) -> tuple:
             image = Image.open(image)  # path to an image
         except IOError:
             print("An exception occurred, make sure you have selected an image type.")
+            sys.exit()
 
     elif isinstance(image, Image.Image) or isinstance(image, np.ndarray):
         # if it is Image.Image or ndarray then pass
@@ -90,6 +97,7 @@ def detection_predict(model, image, confidence_score=0.5, device=None) -> tuple:
     else:
         # else raise an exception
         raise Exception("You must input: bytes, Image type, path for an image, or numpy array.")
+        sys.exit()
 
     # check device
     if device is None:
@@ -119,7 +127,7 @@ def detection_predict(model, image, confidence_score=0.5, device=None) -> tuple:
 
     predict_masks = False
     if 'masks' in prediction.keys():
-        masks = prediction['masks'].tolist()
+        masks = (prediction['masks']>0.5).squeeze().detach().cpu().numpy()
         predict_masks = True
         output['masks'] = []
 
@@ -176,30 +184,35 @@ def display(image, prediction, save_path, idx_to_cls, rect_th=2, text_size=0.5, 
             # image = Image.open(image)
         except IOError:
             print("An exception occurred, make sure you have selected an image type.")
+            sys.exit()
     else:
         raise Exception("Prediction must have: boxes, scores and labels.")
+        sys.exit()
 
     if all(label in prediction.keys() for label in ['boxes', 'scores', 'labels']):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         for idx, box in enumerate(prediction['boxes']):
             if 'masks' in prediction.keys():
                 rgb_mask = get_coloured_mask(prediction["masks"][idx])
-                img = cv2.addWeighted(img, 1, rgb_mask, 0.5, 0)
+                image = cv2.addWeighted(image, 1, rgb_mask, 0.5, 0)
             pt1 = (int(box[0]), int(box[1]))
             pt2 = (int(box[2]), int(box[3]))
             cv2.rectangle(image, pt1, pt2, color=color_map[prediction['labels'][idx]], thickness=rect_th)
             cv2.putText(image, idx_to_cls[prediction['labels'][idx]], pt1, cv2.FONT_HERSHEY_SIMPLEX, text_size,
                         color_map[prediction['labels'][idx]],
                         thickness=text_th)
-            plt.figure(figsize=(10, 10))
-            plt.imshow(image)
-            plt.xticks([])
-            plt.yticks([])
-            plt.savefig(save_path)
-            plt.show()
+
+        plt.figure(figsize=(10, 10))
+        plt.imshow(image)
+        plt.xticks([])
+        plt.yticks([])
+        plt.savefig(save_path)
+        plt.show()
+        print(f"Image saved to {save_path}")
 
     else:
         raise Exception("You must input: Image type, path for an image, or numpy array.")
+        sys.exit()
 
 
 def inference_video(model, video_source, idx_to_cls, confidence_score=0.5, device=None, save_name='video_inference'):
@@ -207,6 +220,7 @@ def inference_video(model, video_source, idx_to_cls, confidence_score=0.5, devic
         assert os.path.exists(video_source), f"Video does not exist in {video_source}"
     else:
         raise Exception("You must input video path")
+        sys.exit()
 
     # check device
     if device is None:
@@ -218,6 +232,7 @@ def inference_video(model, video_source, idx_to_cls, confidence_score=0.5, devic
     cap = cv2.VideoCapture(video_source)
     if not cap.isOpened():
         raise Exception("Error while trying to read video. Please check path again")
+        sys.exit()
 
     idx_to_cls
     cls_to_idx = {}
@@ -388,7 +403,7 @@ def yolo_evaluation(prediction_path, gt_path) -> dict:
 
     metric = MeanAveragePrecision(box_format='xyxy', class_metrics=True)
 
-    for file in pred_files:
+    for file in tqdm(pred_files):
         pre = prepare_prediction(os.path.join(prediction_path, file))
         gt = prepare_gt(os.path.join(gt_path, file))
         metric.update([pre], [gt])

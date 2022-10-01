@@ -4,7 +4,7 @@
  
  This repository contains the code for my Master thesis. I will cover different tasks in computer vision field, like object detection, semantic segmentation, instance segmentation and panoptic segmentation. I will be using different SOTA models.
  
- The main goal of this work is to compare the single task vs multi task learning models, as well as compare multi task models to YOLOP model. YOLOP model is a model that performs Object Detection and Semantic segmentation at the time.
+ The main goal of this work is to compare several object detection models in terms of speed and accuracy. In addition, I ran Mask RCNN to perform instance segmentation on BDD100K dataset.
  
  ---
  
@@ -92,15 +92,15 @@ To train using **Yolov5**:
 
 1- Create new virtual env using `virtualenv` or `conda` then activate it.
 
-2- Clone **Yolov5** repository outside this project:
+2- Clone **Yolov5** repository inside this project:
 ```bash
-cd ..
 git clone https://github.com/ultralytics/yolov5
 ```
 3- Install all dependencies (recommendation: Create new virtual environment when working with yolov5):
    ```bash
    cd yolov5
    pip install -r requirements.txt
+   pip install "opencv-python-headless<4.3"
    ```
 4- Create folder for the dataset inside yolov5 folder:
 ```bash
@@ -110,12 +110,12 @@ mkdir dataset
 
 6- Prepare the data to be aligned with the YOLO format:
 ```bash
-cd ../MSc_Thesis
-python prepare.py --yolo_version yolov5 --dataset_path '../yolov5/dataset' --data './data/yolo.yaml'
+cd ..
+python prepare.py --yolo_version yolov5 --dataset_path 'yolov5/dataset' --data './data/yolo.yaml'
 ```
 5- train the model:
 ```bash
-cd ../yolov5
+cd yolov5
 python train.py --img 640 --batch 32 --epochs 50 --data './data/dataset.yaml' --weights yolov5s.pt --optimizer Adam --name yolo5s_bdd
 ```
 In place of `yolov5s.pt` you can select bigger model like `yolov5l.pt` or `yolov5x.pt`.
@@ -129,7 +129,6 @@ Almost the same as [Yolov5](####Yolov5)
 
 2- Clone **Yolov7** repository outside this project:
 ```bash
-cd ..
 git clone https://github.com/WongKinYiu/yolov7.git
 ```
 3- Install all dependencies (recommendation: Create new virtual environment when working with yolov5):
@@ -145,12 +144,12 @@ mkdir dataset
 
 6- Prepare the data to be aligned with the YOLO format:
 ```bash
-cd ../MSc_Thesis
-python prepare.py --yolo_version yolov7 --dataset_path '../yolov7/dataset' --data './data/yolo.yaml'
+cd ..
+python prepare.py --yolo_version yolov7 --dataset_path 'yolov7/dataset' --data './data/yolo.yaml'
 ```
 5- train the model:
 ```bash
-cd ../yolov7
+cd yolov7
 python python train.py --device 0 --batch-size 32 --data data/dataset.yaml --img 640 640  --epochs 100 --cfg cfg/training/yolov7-custom.yaml --weights 'yolov7_training.pt' --adam --name yolov7_bdd --hyp data/hyp.scratch.custom.yaml
 
 ```
@@ -171,19 +170,19 @@ To evaluate **Yolov5** and **Yolov7** model using mean average precision run the
 
 First for **yolov5**:
 ```bash
-cd ../yolov5
+cd yolov5
 python val.py --data 'data/dataset.yaml' --weights 'path/to/weights' --task test --save-txt --save-conf --project 'path/to/save/pred'
 ```
 
 For **yolov7**:
 ```bash
-cd ../yolov7
+cd yolov7
 python test.py --data 'data/dataset.yaml' --weights 'path/to/weights' --task test --save-txt --save-conf --project 'path/to/save/pred'
 ```
 
 After that run this command:
 ```bash
-cd ../MSc_Thesis
+cd ..
 python yolo_eval.py --pred 'path/to/labels/folder' --gt 'path/to/ground/truth'
 ```
 
@@ -198,13 +197,11 @@ python detect.py --model 'fasterrcnn' --data './data/fasterrcnn.yaml' --weights 
 ```
 ### yolov5
 ```bash
-cd ../yolov5
-python detect.py --data 'data/dataset.yaml' --weights 'path/to/weights' --conf-thres 0.5 --save-txt --save-conf --project 'path/to/save/pred'
+python detect.py --model 'yolov5' --weights 'path/to/weights' --source 'path/to/image' --conf-thres 0.5 --save-path 'yolov5_inference.jpg'
 ```
 ### yolov7
 ```bash
-cd ../yolov7
-python detect.py --data 'data/dataset.yaml' --weights 'path/to/weights' --conf-thres 0.5 --save-txt --save-conf --project 'path/to/save/pred'
+python detect.py --model 'yolov7' --weights 'path/to/weights' --source 'path/to/image' --conf-thres 0.5 --save-path 'yolov7_inference.jpg'
 ```
 
 
@@ -214,6 +211,10 @@ python detect.py --data 'data/dataset.yaml' --weights 'path/to/weights' --conf-t
 
 <img src="./doc/images/map_all.jpg" width="700" height="500">
 
+To see result run:
+```bash
+python results.py
+```
 ---
 
 ## Demo
@@ -226,3 +227,10 @@ some results from yolov7x model:
 ![demo 3](./doc/images/demo_3.jpg)
 
 ---
+
+---
+## Run Server
+```bash
+cd api
+flask run
+```

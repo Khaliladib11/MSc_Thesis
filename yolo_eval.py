@@ -1,6 +1,6 @@
 import os
 import argparse
-from utils import yolo_evaluation
+from util import yolo_evaluation
 from pprint import pprint
 
 if __name__ == "__main__":
