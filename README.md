@@ -9,8 +9,10 @@
  ---
  
 ## Dataset
+
 Dataset used is BDD100K which is available [here](https://www.bdd100k.com/).
 In addition, the data is available on [my google drive](https://drive.google.com/drive/folders/1jupf1DEYrcL7nkt6gIDAx6ioIzv0yAYO?usp=sharing).
+
  ---
  
  ## Project Structure
@@ -48,6 +50,9 @@ In addition, the data is available on [my google drive](https://drive.google.com
 │ ├─YOLO Format.ipynb # Notebook contains tutorial how convert xyxy format to yolo format
 ├─doc
 │ ├─images # some images
+├─scirpts
+│ ├─data.py # download the data from google drive
+│ ├─weights.py # download the weights from google drive
 ├─notebooks
 │ ├─Faster RCNN Notebook.ipynb # Faster RCNN notebook
 │ ├─FCN Notebook.ipynb # FCN notebook
@@ -84,14 +89,14 @@ pip install -R requirements.txt
 
 ---
 ## Installation
-if you want to install the data manually you can download them from my google drive. Or you can run:
+if you want to install the data manually you can download them from my [google drive](https://drive.google.com/drive/folders/1jupf1DEYrcL7nkt6gIDAx6ioIzv0yAYO?usp=sharing). Or you can run:
 ```bash
 pip install gdown
 python scripts/data.py
 ```
 make sure you put the data in the right place. see the project structure section.
 
-Weights can be dowloaded as well from my google drive. Or you can run:
+Weights can be dowloaded as well from my [google drive](https://drive.google.com/drive/folders/1yIeiFDJ0quhH_Z0lxGnI0suEoiG2Jy2h?usp=sharing). Or you can run:
 ```bash
 python scripts/weights.py
 ```
