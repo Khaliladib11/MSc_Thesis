@@ -9,8 +9,10 @@
  ---
  
 ## Dataset
+
 Dataset used is BDD100K which is available [here](https://www.bdd100k.com/).
 In addition, the data is available on [my google drive](https://drive.google.com/drive/folders/1jupf1DEYrcL7nkt6gIDAx6ioIzv0yAYO?usp=sharing).
+
  ---
  
  ## Project Structure
@@ -48,6 +50,9 @@ In addition, the data is available on [my google drive](https://drive.google.com
 │ ├─YOLO Format.ipynb # Notebook contains tutorial how convert xyxy format to yolo format
 ├─doc
 │ ├─images # some images
+├─scirpts
+│ ├─data.py # download the data from google drive
+│ ├─weights.py # download the weights from google drive
 ├─notebooks
 │ ├─Faster RCNN Notebook.ipynb # Faster RCNN notebook
 │ ├─FCN Notebook.ipynb # FCN notebook
