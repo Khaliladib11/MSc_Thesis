@@ -1,2 +1,2 @@
-classes: ['__bgr__', 'person', 'car']
+classes: ['__bgr__', 'person', 'car', 'road'']
 relative_path: '.'

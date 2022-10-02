@@ -67,7 +67,7 @@ if __name__ == '__main__':
     elif model_name.startswith('yolov5'):
         try:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            model = torch.hub.load('./yolov5', 'custom', path=weights, source='local', device=device, _verbose=False)
+            model = torch.hub.load('./yolov5', 'custom', path=weights, source='local', force_reload=True, _verbose=False)
             model.conf = confidence_score
         except Exception as e:
             print("Could not load the model weights. Please make sure you're providing the correct model weights.")
@@ -76,7 +76,7 @@ if __name__ == '__main__':
             image = Image.open(source)
             results = model(image)
             results.print()
-            results.save(save_path)
+            results.save(save_dir='./results/yolov7')
         except Exception as e:
             print(e)
             sys.exit()
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     elif model_name.startswith('yolov7'):
         try:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            model = torch.hub.load('../yolov7', 'custom', path_or_model=weights, source='local')
+            model = torch.hub.load('./yolov7', 'custom', path_or_model=weights, source='local')
             model.conf = confidence_score
         except Exception as e:
             print("Could not load the model weights. Please make sure you're providing the correct model weights.")
@@ -93,7 +93,7 @@ if __name__ == '__main__':
             image = Image.open(source)
             results = model(image)
             results.print()
-            results.save(save_path)
+            results.save(save_dir='./results/yolov7')
         except Exception as e:
             print(e)
             sys.exit()
