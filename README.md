@@ -226,7 +226,7 @@ python test.py --data 'data/dataset.yaml' --weights 'path/to/weights' --task tes
 After that run this command:
 ```bash
 cd ..
-python yolo_eval.py --pred 'path/to/labels/folder' --gt 'path/to/ground/truth'
+python test.py --pred 'path/to/labels/folder' --gt 'path/to/ground/truth'
 ```
 
 Where `pred` is the path where the yolo models will save the prediction for each image as `.txt` files. `gt` is the path for the ground truth generated from the `prepare.py` files.

@@ -39,8 +39,8 @@ try:
     yolov5s = torch.hub.load(path_to_yolov5, 'custom', path=weights['yolov5s'], source='local')
     yolov5l = torch.hub.load(path_to_yolov5, 'custom', path=weights['yolov5l'], source='local')
     yolov5x = torch.hub.load(path_to_yolov5, 'custom', path=weights['yolov5x'], source='local')
-    yolov7 = torch.hub.load(path_to_yolov7, 'custom', path=weights['yolov7'], source='local', force_reload=True)
-    yolov7x = torch.hub.load(path_to_yolov7, 'custom', path=weights['yolov7x'], source='local', force_reload=True)
+    yolov7 = torch.hub.load(path_to_yolov7, 'custom', path_or_model=weights['yolov7'], source='local', force_reload=True)
+    yolov7x = torch.hub.load(path_to_yolov7, 'custom', path_or_model=weights['yolov7x'], source='local', force_reload=True)
 
 except Exception as e:
     print("There is problem with loading models")

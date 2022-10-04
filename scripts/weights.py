@@ -1,5 +1,14 @@
 import gdown
+import os
 
+#os.mkdir('../weights')
+#os.chdir('..')
+
+
+id = "1yIeiFDJ0quhH_Z0lxGnI0suEoiG2Jy2h"
+gdown.download_folder(id=id, quiet=True, use_cookies=False)
+
+"""
 ids = {
     'fasterrcnn_weights.pt': '1Rj1xVxvDOjzYGexVejIR7-dsUIA8gKX-',
     'maskrcnn_weights.pt': '1CEXLdTieO4u_UGy5baVceqPRO7tgeokQ',
@@ -12,3 +21,4 @@ ids = {
 
 for idx in ids:
     gdown.download(id=ids[idx], output=idx, quiet=False)
+"""
