@@ -52,6 +52,34 @@ available_models = ['yolov5s', 'yolov5l', 'yolov5x', 'yolov7', 'yolov7x', 'faste
 acceptable_file_format = ['jpg', 'jpeg', 'png']
 
 
+def load_model(model_name):
+    """
+    function to return model
+    :param model_name: the name of the model
+    :param score: the confidence score of the model
+    :return: model
+    """
+    assert model_name in weights.keys(), "Choose a correct model name"
+
+    if model_name == 'fasterrcnn':
+        model = Faster_RCNN.load_from_checkpoint(weights['fasterrcnn'])
+    elif model_name == 'yolov5s':
+        model = torch.hub.load(path_to_yolov5, 'custom', path=weights['yolov5s'], source='local')
+    elif model_name == 'yolov5l':
+        model = torch.hub.load(path_to_yolov5, 'custom', path=weights['yolov5l'], source='local')
+    elif model_name == 'yolov5x':
+        model = torch.hub.load(path_to_yolov5, 'custom', path=weights['yolov5x'], source='local')
+    elif model_name == 'yolov7s':
+        model = torch.hub.load(path_to_yolov7, 'custom', path_or_model=weights['yolov7'], source='local',
+                                force_reload=True)
+
+    elif model_name == 'yolov7x':
+        model = torch.hub.load(path_to_yolov7, 'custom', path_or_model=weights['yolov7x'], source='local',
+                                force_reload=True)
+
+    return model
+
+
 def get_prediction(img_bytes, score, model_name) -> tuple:
     """
     function to predict from image byte
@@ -64,43 +92,19 @@ def get_prediction(img_bytes, score, model_name) -> tuple:
     scores = []  # array of scores
     labels = []  # array of labels
 
+    model = load_model(model_name)
     # Faster RCNN model
     if model_name == 'fasterrcnn':
-        prediction = fasterrcnn_model.predict(img_bytes, score, device)  # predict using Faster RCNN model
+        prediction = model.predict(img_bytes, score, device)  # predict using Faster RCNN model
         boxes = prediction['boxes']  # get the bounding boxes
         scores = prediction['scores']  # get the scores
         labels = [IDX_TO_CLS[label - 1] for label in prediction['labels']]  # convert the idx to labels
         # return the arrays
         return boxes, scores, labels
-
-    # yolov5s model
-    elif model_name == 'yolov5s':
+    else:
         image = Image.open(io.BytesIO(img_bytes))  # open the image as Image.Image type
-        yolov5s.conf = score  # change the confidence score
+        model.conf = score  # change the confidence score
         df = yolov5s(image).pandas().xyxy[0]  # inference
-
-
-    # yolov5l model
-    elif model_name == 'yolov5l':
-        image = Image.open(io.BytesIO(img_bytes))
-        yolov5l.conf = score
-        df = yolov5l(image).pandas().xyxy[0]  # inference
-
-    # yolov5l model
-    elif model_name == 'yolov5x':
-        image = Image.open(io.BytesIO(img_bytes))
-        yolov5x.conf = score
-        df = yolov5x(image).pandas().xyxy[0]  # inference
-
-    elif model_name == 'yolov5':
-        image = Image.open(io.BytesIO(img_bytes))
-        yolov7.conf = score
-        df = yolov7(image).pandas().xyxy[0]  # inference
-
-    elif model_name == 'yolov7x':
-        image = Image.open(io.BytesIO(img_bytes))
-        yolov7x.conf = score
-        df = yolov7x(image).pandas().xyxy[0]  # inference
 
     # loop through the dataframe to get the predictions
     # yolov5 models return the data as pandas dataframe
